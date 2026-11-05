@@ -1,0 +1,10 @@
+/* Foco visible en todo elemento operable con teclado (WCAG 2.2 AA). */
+:focus-visible {
+  outline: 3px solid #b45309;
+  outline-offset: 2px;
+}
+
+/* Disponible aunque el CDN de Tailwind no cargue. */
+.hidden {
+  display: none;
+}

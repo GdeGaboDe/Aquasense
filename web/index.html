@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Panel general · AquaSense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="module" src="/js/panel.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <header class="bg-sky-900 text-white">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 p-4">
+        <p class="text-xl font-bold">AquaSense</p>
+        <button
+          id="salir"
+          type="button"
+          class="rounded border border-white px-3 py-2 font-medium hover:bg-sky-800"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl p-4">
+      <h1 class="text-2xl font-bold">Panel general</h1>
+      <p id="actualizado" role="status" class="mb-4 text-slate-700">Cargando tanques…</p>
+
+      <div id="error" role="alert" class="mb-4 hidden rounded bg-red-100 p-4 text-red-900">
+        <p id="error-mensaje" class="mb-2"></p>
+        <button id="reintentar" type="button" class="rounded bg-red-900 px-3 py-2 font-medium text-white">
+          Reintentar
+        </button>
+      </div>
+
+      <p id="vacio" class="hidden rounded bg-white p-6 text-center shadow">
+        Todavía no hay tanques registrados.
+      </p>
+
+      <div id="tanques" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"></div>
+    </main>
+  </body>
+</html>

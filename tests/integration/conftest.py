@@ -2,7 +2,9 @@ import hashlib
 import os
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
+import bcrypt
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -11,6 +13,7 @@ from sqlalchemy import Engine, create_engine, delete, make_url
 from sqlalchemy.orm import Session
 
 from app.api.deps import obtener_sesion
+from app.api.seguridad import limitador
 from app.config import obtener_settings
 from app.main import crear_app
 from app.modelos import (
@@ -86,14 +89,18 @@ def sesion(engine: Engine) -> Iterator[Session]:
 
 @pytest.fixture
 def crear_cliente(engine: Engine) -> Callable[..., TestClient]:
-    def fabrica(ip: str = IP_LAN) -> TestClient:
+    limitador.reset()
+
+    def fabrica(
+        ip: str = IP_LAN, base_url: str = "http://testserver", **opciones: object
+    ) -> TestClient:
         def sesion_de_prueba() -> Iterator[Session]:
             with Session(engine, expire_on_commit=False) as sesion:
                 yield sesion
 
         app = crear_app(obtener_settings())
         app.dependency_overrides[obtener_sesion] = sesion_de_prueba
-        return TestClient(app, client=(ip, 50000))
+        return TestClient(app, base_url=base_url, client=(ip, 50000), **opciones)
 
     return fabrica
 
@@ -133,3 +140,31 @@ def crear_nodo(sesion: Session) -> Callable[..., NodoDePrueba]:
         return NodoDePrueba(nodo.id, nodo.mac, token, tanque.id)
 
     return fabrica
+
+
+USUARIO_DE_PRUEBA = "admin"
+CONTRASENA_DE_PRUEBA = "contrasena-de-prueba"
+
+
+@pytest.fixture
+def usuario(sesion: Session) -> Usuario:
+    # Costo mínimo de bcrypt: solo para que las pruebas sean rápidas.
+    hash_contrasena = bcrypt.hashpw(CONTRASENA_DE_PRUEBA.encode(), bcrypt.gensalt(rounds=4))
+    usuario = Usuario(
+        usuario=USUARIO_DE_PRUEBA,
+        hash_contrasena=hash_contrasena.decode(),
+        creado_en=datetime.now(UTC),
+    )
+    sesion.add(usuario)
+    sesion.commit()
+    return usuario
+
+
+@pytest.fixture
+def cliente_con_sesion(cliente: TestClient, usuario: Usuario) -> TestClient:
+    respuesta = cliente.post(
+        "/api/v1/auth/login",
+        json={"usuario": USUARIO_DE_PRUEBA, "contrasena": CONTRASENA_DE_PRUEBA},
+    )
+    assert respuesta.status_code == 200
+    return cliente

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 from starlette.exceptions import HTTPException
 
+from app.api.seguridad import ENCABEZADOS_BASE
 from app.servicios.errores import ErrorDeNegocio
 
 logger = logging.getLogger(__name__)
@@ -62,8 +63,11 @@ def registrar_manejadores(app: FastAPI) -> None:
             request.url.path,
             type(error).__name__,
         )
-        return _respuesta(
+        respuesta = _respuesta(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "ERROR_INTERNO",
             "Ocurrió un error interno.",
         )
+        # Este manejador corre por fuera de los middlewares: no pasaría por los encabezados.
+        respuesta.headers.update(ENCABEZADOS_BASE)
+        return respuesta

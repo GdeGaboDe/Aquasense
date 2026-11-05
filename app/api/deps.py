@@ -3,6 +3,7 @@
 import hashlib
 import ipaddress
 import secrets
+import time
 from collections.abc import Iterator
 from typing import Annotated
 
@@ -11,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import obtener_settings
 from app.db import obtener_fabrica_sesiones
-from app.modelos import Nodo
+from app.modelos import Nodo, Usuario
 from app.repositorios.ingesta import buscar_autonomo_por_token
 from app.servicios.errores import ErrorDeNegocio
 
@@ -69,3 +70,27 @@ def obtener_autonomo(
 
 
 AutonomoActual = Annotated[Nodo, Depends(obtener_autonomo)]
+
+
+def obtener_usuario_actual(request: Request, sesion: SesionBD) -> Usuario:
+    error = ErrorDeNegocio(
+        status.HTTP_401_UNAUTHORIZED, "SESION_REQUERIDA", "Inicia sesión para continuar."
+    )
+    datos = request.session
+    usuario_id = datos.get("usuario_id")
+    if usuario_id is None:
+        raise error
+    # SessionMiddleware renueva la cookie en cada respuesta; el límite de 8 h se cuenta aquí.
+    limite_s = obtener_settings().sesion_horas * 3600
+    usuario = sesion.get(Usuario, usuario_id)
+    if (
+        usuario is None
+        or datos.get("version") != usuario.sesion_version
+        or time.time() - datos.get("iniciada_en", 0) > limite_s
+    ):
+        datos.clear()
+        raise error
+    return usuario
+
+
+UsuarioSesion = Annotated[Usuario, Depends(obtener_usuario_actual)]

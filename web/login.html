@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Iniciar sesión · AquaSense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="module" src="/js/login.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <main class="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center p-4">
+      <h1 class="mb-1 text-3xl font-bold text-sky-900">AquaSense</h1>
+      <p class="mb-6 text-slate-700">Monitoreo de peceras</p>
+
+      <form id="formulario" class="rounded-lg bg-white p-5 shadow" novalidate>
+        <div class="mb-4">
+          <label for="usuario" class="mb-1 block font-medium">Usuario</label>
+          <input
+            id="usuario"
+            name="usuario"
+            type="text"
+            autocomplete="username"
+            required
+            maxlength="60"
+            class="w-full rounded border border-slate-500 p-3 text-base"
+          />
+        </div>
+        <div class="mb-4">
+          <label for="contrasena" class="mb-1 block font-medium">Contraseña</label>
+          <input
+            id="contrasena"
+            name="contrasena"
+            type="password"
+            autocomplete="current-password"
+            required
+            maxlength="128"
+            class="w-full rounded border border-slate-500 p-3 text-base"
+          />
+        </div>
+        <p id="error" role="alert" class="mb-4 hidden rounded bg-red-100 p-3 text-red-900"></p>
+        <button
+          id="entrar"
+          type="submit"
+          class="w-full rounded bg-sky-800 p-3 text-base font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500"
+        >
+          Entrar
+        </button>
+      </form>
+    </main>
+  </body>
+</html>
