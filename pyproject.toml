@@ -1,0 +1,21 @@
+[project]
+name = "aquasense"
+version = "0.1.0"
+description = "Plataforma web y base de datos para monitorear y controlar peceras con nodos ESP32"
+requires-python = ">=3.12"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "S", "N", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+# En pruebas: assert es lo normal y las claves son valores falsos
+"tests/**" = ["S101", "S105", "S106"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"

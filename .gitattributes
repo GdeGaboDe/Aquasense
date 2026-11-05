@@ -1,0 +1,3 @@
+* text=auto
+# El script corre dentro del contenedor Linux de MySQL: con CRLF falla.
+*.sh text eol=lf

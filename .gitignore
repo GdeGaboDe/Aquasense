@@ -1,0 +1,22 @@
+# Secretos
+.env
+
+# Entornos virtuales
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Respaldos de la base (nunca van al repositorio)
+*.sql
+
+# IDE y sistema
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
