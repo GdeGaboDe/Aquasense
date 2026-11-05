@@ -174,7 +174,8 @@ Diseño normalizado a **3FN**. Todas las fechas en **UTC**, tipo `DATETIME(3)`. 
 ### 5.1 Tablas
 
 **`usuario`** — cuentas de la web (un solo rol: administrador).
-`id` PK · `usuario` UK · `hash_contrasena` · `creado_en` · `ultimo_acceso` NULL
+`id` PK · `usuario` UK · `hash_contrasena` · `sesion_version` INT NOT NULL DEFAULT 1 · `creado_en` · `ultimo_acceso` NULL
+- `sesion_version` sube al cerrar sesión e invalida las cookies firmadas con un valor anterior.
 
 **`tanque`** — cada pecera.
 `id` PK · `nombre` UK · `volumen_l` DECIMAL · `especie` NULL · `notas` NULL
@@ -186,6 +187,10 @@ Diseño normalizado a **3FN**. Todas las fechas en **UTC**, tipo `DATETIME(3)`. 
 - El **rol no se guarda**: con `padre_id` es satélite; sin él, autónomo.
 - `CHECK`: un autónomo (`padre_id IS NULL`) tiene `token_hash`; un satélite no tiene token.
 - `token_hash` = SHA-256 del token. El token en claro **nunca** se guarda.
+
+**`nodo_modulo`** — módulos que el nodo anunció en su último lote. Hace falta porque `servo` y `rtc` no reportan
+variables y aun así hay que saber si el nodo los tiene.
+PK(`nodo_id`, `modulo`) · `detectado_en`
 
 **`variable`** — catálogo de lo que se puede medir.
 `id` PK · `codigo` UK (`temp_c`, `tds_ppm`…) · `nombre` · `unidad` NULL · `tipo` ENUM(`numero`,`booleano`) ·
@@ -303,7 +308,7 @@ Reglas:
 
 Respuesta `200`:
 ```json
-{ "aceptadas": 41, "duplicadas": 3, "rechazadas": [ { "indice": 7, "motivo": "MAC_NO_REGISTRADA" } ] }
+{ "aceptadas": 41, "duplicadas": 3, "rechazadas": [ { "lista": "lecturas", "indice": 7, "motivo": "MAC_NO_REGISTRADA" } ] }
 ```
 
 ### 6.2 `GET /api/v1/device/config`
@@ -341,6 +346,7 @@ Un ACK de un comando que no pertenece a los nodos de este token responde `403`.
 |---|---|
 | 401 | Falta el token o no es válido |
 | 403 | El token es válido pero el recurso no le pertenece |
+| 409 | Otro envío guardó los mismos datos al mismo tiempo; se reintenta el lote |
 | 422 | El JSON no cumple el esquema |
 | 429 | Demasiadas peticiones |
 

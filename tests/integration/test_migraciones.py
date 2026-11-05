@@ -24,11 +24,18 @@ def test_restricciones_check_conservan_el_nombre_de_la_convencion(engine: Engine
 
     nombres = {
         restriccion["name"]
-        for tabla in ("variable", "parametro")
+        for tabla in inspector.get_table_names()
         for restriccion in inspector.get_check_constraints(tabla)
     }
 
-    assert nombres == {"ck_variable_rango_fisico", "ck_parametro_rango"}
+    assert nombres == {
+        "ck_variable_rango_fisico",
+        "ck_parametro_rango",
+        "ck_tanque_volumen_positivo",
+        "ck_nodo_token_solo_en_autonomo",
+        "ck_dosis_cargas_positivas",
+        "ck_cambio_agua_porcentaje_valido",
+    }
 
 
 def test_la_migracion_se_puede_revertir_sin_dejar_tablas(engine: Engine, alembic_config: Config):
