@@ -5,6 +5,13 @@ const usuario = document.getElementById("usuario");
 const contrasena = document.getElementById("contrasena");
 const error = document.getElementById("error");
 const entrar = document.getElementById("entrar");
+const botonVer = document.getElementById("ver-contrasena");
+
+function verContrasena(visible) {
+  contrasena.type = visible ? "text" : "password";
+  botonVer.textContent = visible ? "Ocultar" : "Mostrar";
+  botonVer.setAttribute("aria-pressed", String(visible));
+}
 
 function mostrarError(mensaje) {
   error.textContent = mensaje;
@@ -19,6 +26,8 @@ async function iniciarSesion(evento) {
     return;
   }
 
+  // Se oculta al enviar para que no quede a la vista mientras se abre el panel o tras un error.
+  verContrasena(false);
   entrar.disabled = true;
   entrar.textContent = "Entrando…";
   try {
@@ -37,5 +46,6 @@ async function iniciarSesion(evento) {
   }
 }
 
+botonVer.addEventListener("click", () => verContrasena(contrasena.type === "password"));
 formulario.addEventListener("submit", iniciarSesion);
 usuario.focus();

@@ -29,15 +29,26 @@
         </div>
         <div class="mb-4">
           <label for="contrasena" class="mb-1 block font-medium">Contraseña</label>
-          <input
-            id="contrasena"
-            name="contrasena"
-            type="password"
-            autocomplete="current-password"
-            required
-            maxlength="128"
-            class="w-full rounded border border-slate-500 p-3 text-base"
-          />
+          <div class="flex gap-2">
+            <input
+              id="contrasena"
+              name="contrasena"
+              type="password"
+              autocomplete="current-password"
+              required
+              maxlength="128"
+              class="w-full min-w-0 rounded border border-slate-500 p-3 text-base"
+            />
+            <button
+              id="ver-contrasena"
+              type="button"
+              aria-pressed="false"
+              aria-controls="contrasena"
+              class="shrink-0 rounded border border-slate-500 px-3 font-medium text-slate-900 hover:bg-slate-100"
+            >
+              Mostrar
+            </button>
+          </div>
         </div>
         <p id="error" role="alert" class="mb-4 hidden rounded bg-red-100 p-3 text-red-900"></p>
         <button
