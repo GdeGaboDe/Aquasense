@@ -20,3 +20,6 @@ __pycache__/
 .claude/
 Thumbs.db
 .DS_Store
+
+# Base SQLite de desarrollo sin Docker
+*.db

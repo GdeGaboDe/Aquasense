@@ -26,6 +26,11 @@ Solo lo que **no es circuito**:
 **Fuera de alcance:** el firmware del ESP32 y el protocolo ESP-NOW entre nodos. El firmware solo nos importa a través
 del contrato de la sección 6, que es obligatorio para ambos lados.
 
+**Firmware actual:** el del equipo es un servidor web (`/datos`, `/abrir`, `/cerrar`), no cliente del contrato.
+`tools/puente_esp32.py` corre en la laptop y hace de nodo autónomo: lee `/datos`, envía la telemetría, ejecuta los
+`DISPENSAR` y responde los ACK (ver `docs/conexion-esp32.md`). Si el firmware llega a implementar el contrato, el puente
+deja de hacer falta.
+
 ### 1.2 Arquitectura física (contexto)
 
 ```
@@ -174,7 +179,8 @@ Diseño normalizado a **3FN**. Todas las fechas en **UTC**, tipo `DATETIME(3)`. 
 ### 5.1 Tablas
 
 **`usuario`** — cuentas de la web (un solo rol: administrador).
-`id` PK · `usuario` UK · `hash_contrasena` · `creado_en` · `ultimo_acceso` NULL
+`id` PK · `usuario` UK · `hash_contrasena` · `sesion_version` INT NOT NULL DEFAULT 1 · `creado_en` · `ultimo_acceso` NULL
+- `sesion_version` sube al cerrar sesión e invalida las cookies firmadas con un valor anterior.
 
 **`tanque`** — cada pecera.
 `id` PK · `nombre` UK · `volumen_l` DECIMAL · `especie` NULL · `notas` NULL
@@ -186,6 +192,10 @@ Diseño normalizado a **3FN**. Todas las fechas en **UTC**, tipo `DATETIME(3)`. 
 - El **rol no se guarda**: con `padre_id` es satélite; sin él, autónomo.
 - `CHECK`: un autónomo (`padre_id IS NULL`) tiene `token_hash`; un satélite no tiene token.
 - `token_hash` = SHA-256 del token. El token en claro **nunca** se guarda.
+
+**`nodo_modulo`** — módulos que el nodo anunció en su último lote. Hace falta porque `servo` y `rtc` no reportan
+variables y aun así hay que saber si el nodo los tiene.
+PK(`nodo_id`, `modulo`) · `detectado_en`
 
 **`variable`** — catálogo de lo que se puede medir.
 `id` PK · `codigo` UK (`temp_c`, `tds_ppm`…) · `nombre` · `unidad` NULL · `tipo` ENUM(`numero`,`booleano`) ·
@@ -303,7 +313,7 @@ Reglas:
 
 Respuesta `200`:
 ```json
-{ "aceptadas": 41, "duplicadas": 3, "rechazadas": [ { "indice": 7, "motivo": "MAC_NO_REGISTRADA" } ] }
+{ "aceptadas": 41, "duplicadas": 3, "rechazadas": [ { "lista": "lecturas", "indice": 7, "motivo": "MAC_NO_REGISTRADA" } ] }
 ```
 
 ### 6.2 `GET /api/v1/device/config`
@@ -341,6 +351,7 @@ Un ACK de un comando que no pertenece a los nodos de este token responde `403`.
 |---|---|
 | 401 | Falta el token o no es válido |
 | 403 | El token es válido pero el recurso no le pertenece |
+| 409 | Otro envío guardó los mismos datos al mismo tiempo; se reintenta el lote |
 | 422 | El JSON no cumple el esquema |
 | 429 | Demasiadas peticiones |
 
@@ -370,7 +381,11 @@ aplica el paso 3. Redondea `medido_en` a milisegundos.
   Se resuelve cuando el valor regresa a `[minimo + histeresis, maximo − histeresis]`.
 - `flotador_bajo = 1` → `NIVEL_BAJO`. `tolva_vacia = 1` → `TOLVA_VACIA`. Se resuelven al volver a `0`.
 - Nunca dos alertas activas iguales (mismo tanque, tipo y variable).
-- Un comando `fallido` o `expirado` genera `COMANDO_FALLIDO`.
+- Un comando `fallido` o `expirado` genera `COMANDO_FALLIDO`; se resuelve cuando un comando posterior del mismo
+  tanque se confirma.
+- Solo se evalúa la lectura más reciente de cada sensor en el lote, y solo si es más nueva que la última guardada
+  con hora confiable: las lecturas atrasadas de LittleFS y las de hora `desconocida` no abren ni cierran alertas.
+- La regla de una alerta activa se impone en la base con un índice único sobre columnas generadas.
 - **Nodo sin reportar:** si `ultimo_contacto` es más antiguo que 3 veces la cadencia (30 s), el estado del tanque se
   muestra como "sin conexión". Se calcula **al consultar**; no hay tareas en segundo plano.
 
@@ -381,7 +396,10 @@ Estados: `pendiente → entregado → confirmado | fallido`; `pendiente → expi
 - Un comando `pendiente` expira 120 s después de creado si no se entregó.
 - Un comando `entregado` sin ACK en 60 s se muestra como "sin confirmar" en la web, pero **no se reenvía**.
 - **Seguridad:** un `DISPENSAR` nunca se reenvía automáticamente. Mejor no dispensar que dar doble ración.
-- Solo un `DISPENSAR` activo (`pendiente` o `entregado`) por nodo a la vez; otro intento responde `409`.
+- Solo un `DISPENSAR` activo por nodo a la vez; otro intento responde `409`. Activo significa `pendiente`, o
+  `entregado` sin llegar todavía a "sin confirmar": si un ACK perdido lo dejara activo para siempre, no se podría
+  volver a alimentar desde la web.
+- La expiración se aplica al consultar (configuración del nodo o lista de comandos): no hay tareas en segundo plano.
 - Al confirmar un `DISPENSAR`, se espera el evento `dosis` con ese `comando_id`; si llega, se liga.
 
 | Tipo | Argumento | Requiere módulo |
@@ -410,7 +428,13 @@ Un parámetro solo se puede asignar a un nodo que tenga su `modulo_requerido`.
   "estimación aún no confiable" y el baseline si existe. **Nunca** inventes un número.
 - **Evaluación sin fuga de datos:** división cronológica por ciclos (entrenar con ciclos viejos, evaluar con el último);
   nunca aleatoria. Métrica: MAE en días, comparada contra el baseline.
-- Se guarda una fila en `prediccion` como máximo una vez por hora por ciclo, con `modelo_version`.
+- Se guarda una fila en `prediccion` como máximo una vez por hora por ciclo, con `modelo_version`. Solo se guardan
+  estimaciones confiables.
+- Una pendiente menor que 1e-6 ppm/h, o un cruce a más de 10 años, se trata como "sin cruce": es ruido, no tendencia.
+- Cualquier cambio de agua, parcial o total, cierra el ciclo actual. Debe ser posterior al último registrado y no estar
+  en el futuro.
+- `GET /tanques/{id}/prediccion` incluye la evaluación sobre el último ciclo completo: una predicción por cada día de
+  datos, usando solo las lecturas hasta ese corte; el baseline solo conoce los ciclos anteriores.
 
 ---
 
@@ -425,7 +449,7 @@ Base: `/api/v1`. Autenticación por cookie de sesión. Todas las rutas (salvo lo
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/yo` | Sesión. Login con límite de 5 intentos por minuto por IP |
 | `GET /tanques` | Lista con estado actual: últimas lecturas, alertas activas, "sin conexión" |
 | `POST /tanques` · `PATCH /tanques/{id}` | Alta y edición (el alta registra el cambio de agua inicial) |
-| `GET /tanques/{id}/lecturas?variable=&desde=&hasta=&intervalo=` | Serie para gráficas, **agregada en el servidor** (promedio por intervalo: 1m, 5m, 1h). Máximo 2,000 puntos |
+| `GET /tanques/{id}/lecturas?variable=&desde=&hasta=&intervalo=` | Serie para gráficas, **agregada en el servidor** (promedio por intervalo: 1m, 5m, 1h). Máximo 2,000 puntos y 31 días. Excluye la hora `desconocida` salvo con `incluir_desconocidas=true` |
 | `GET /alertas?activa=&tanque_id=&pagina=&tamano=` | Paginado, máximo 100 por página |
 | `POST /comandos` · `GET /comandos?nodo_id=&pagina=` | Crear y consultar comandos |
 | `GET /nodos/{id}/parametros` · `PUT /nodos/{id}/parametros` | Configuración (valida y sube `config_version`) |
@@ -511,9 +535,10 @@ es obligatorio, no opcional.
   - La web y su API son accesibles desde la URL pública, siempre con sesión.
 - **Hosts permitidos:** `TrustedHostMiddleware` con la URL pública, la IP local de la laptop y `localhost`
   (`HOSTS_PERMITIDOS`). Cualquier otro `Host` responde `400`.
-- **IP real del cliente:** `cloudflared` se conecta a la app desde `127.0.0.1`. Para el límite de intentos, la IP del
-  cliente se toma de `CF-Connecting-IP` **solo** si la petición viene de `127.0.0.1`; nunca se confía en ese header
-  si viene de otra IP. Uvicorn arranca con `--proxy-headers --forwarded-allow-ips 127.0.0.1`.
+- **IP real del cliente:** la IP del cliente se toma de `CF-Connecting-IP` **solo** si la petición viene del proxy de
+  confianza (`IPS_PROXY_CONFIABLES`); nunca se confía en ese header si viene de otra IP. Sin Docker es `127.0.0.1` y
+  uvicorn arranca con `--proxy-headers --forwarded-allow-ips 127.0.0.1`. Con Docker, `cloudflared` corre en su propio
+  contenedor con IP fija y uvicorn recibe esa IP por `FORWARDED_ALLOW_IPS`.
 - **Límites de peticiones:** login 5 por minuto por IP; resto de la API web 120 por minuto por IP; respuesta `429`.
 - **Documentación de la API** (`/docs`, `/openapi.json`) desactivada fuera de desarrollo (`DOCS_PUBLICAS=false`).
 - **No indexar:** `<meta name="robots" content="noindex">` y `robots.txt` con `Disallow: /`.
@@ -619,9 +644,9 @@ la laptop hacia Cloudflare, que entrega una URL pública con HTTPS. No se abren 
 
 ### 14.1 Servidor en la laptop
 
-- `uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1`
+- `uvicorn app.main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips 127.0.0.1`
 - Router con canal WiFi fijo en 2.4 GHz y la IP de la laptop reservada (el ESP32 la usa).
-- Firewall de Windows: permitir el puerto 8000 **solo desde la red local** (perfil privado), para el ESP32.
+- Firewall de Windows: permitir el puerto 8010 **solo desde la red local** (perfil privado), para el ESP32.
 - La laptop no se suspende; `cloudflared` y la app arrancan solos al iniciar Windows.
 
 ### 14.2 Túnel: dos modos
@@ -629,7 +654,7 @@ la laptop hacia Cloudflare, que entrega una URL pública con HTTPS. No se abren 
 | Modo | Cómo | URL | Para qué |
 |---|---|---|---|
 | **Túnel con nombre (recomendado)** | Cuenta gratuita de Cloudflare + un dominio propio gestionado en Cloudflare; `cloudflared` instalado como servicio | Fija, p. ej. `https://aquasense.midominio.com` | Que la URL no cambie y se pueda compartir con el profe y el equipo |
-| **Quick Tunnel (respaldo)** | `cloudflared tunnel --url http://localhost:8000`, sin cuenta | Aleatoria en `trycloudflare.com`, **cambia cada vez que se reinicia** | Pruebas o emergencia el día de la demo. Cloudflare lo marca como solo para pruebas y sin garantía de disponibilidad |
+| **Quick Tunnel (respaldo)** | `cloudflared tunnel --url http://localhost:8010`, sin cuenta | Aleatoria en `trycloudflare.com`, **cambia cada vez que se reinicia** | Pruebas o emergencia el día de la demo. Cloudflare lo marca como solo para pruebas y sin garantía de disponibilidad |
 
 - Al cambiar de URL, actualizar `HOSTS_PERMITIDOS`.
 - **No usar el plan gratuito de ngrok:** tiene un límite mensual de peticiones HTTP que el polling de la web agota en

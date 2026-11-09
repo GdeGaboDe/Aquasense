@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Alertas · AquaSense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="module" src="/js/alertas.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <header class="bg-sky-900 text-white">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 p-4">
+        <p class="text-xl font-bold">AquaSense</p>
+        <button
+          id="salir"
+          type="button"
+          class="rounded border border-white px-3 py-2 font-medium hover:bg-sky-800"
+        >
+          Cerrar sesión
+        </button>
+        <nav aria-label="Principal" class="w-full overflow-x-auto">
+          <ul class="flex gap-1 text-base font-medium">
+            <li><a href="/" class="block rounded px-3 py-2 hover:bg-sky-800">Panel</a></li>
+            <li><a href="/alertas.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alertas</a></li>
+            <li><a href="/alimentacion.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alimentación</a></li>
+            <li><a href="/ajustes.html" class="block rounded px-3 py-2 hover:bg-sky-800">Ajustes</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl p-4">
+      <h1 class="mb-3 text-2xl font-bold">Alertas</h1>
+      <form id="filtros" class="mb-4 rounded-lg bg-white p-4 shadow grid gap-3 sm:grid-cols-3">
+        <div>
+          <label for="estado" class="mb-1 block font-medium">Estado</label>
+          <select id="estado" class="w-full rounded border border-slate-500 p-2 text-base">
+            <option value="true">Activas</option>
+            <option value="false">Resueltas</option>
+            <option value="">Todas</option>
+          </select>
+        </div>
+        <div>
+          <label for="tanque" class="mb-1 block font-medium">Tanque</label>
+          <select id="tanque" class="w-full rounded border border-slate-500 p-2 text-base"></select>
+        </div>
+      </form>
+      <p id="estado-carga" role="status" class="mb-3 text-slate-700">Cargando alertas…</p>
+      <div id="aviso" role="alert" hidden></div>
+      <ul id="lista" class="space-y-3"></ul>
+      <nav aria-label="Páginas de alertas" class="mt-4 flex items-center justify-between gap-2">
+        <button id="anterior" type="button" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Anterior</button>
+        <span id="pagina" class="text-slate-700"></span>
+        <button id="siguiente" type="button" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Siguiente</button>
+      </nav>
+    </main>
+  </body>
+</html>

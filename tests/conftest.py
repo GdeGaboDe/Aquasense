@@ -13,3 +13,5 @@ os.environ["DATABASE_URL"] = _url_pruebas
 os.environ["MIGRACIONES_DATABASE_URL"] = _url_pruebas
 os.environ["SECRET_KEY"] = "clave-solo-para-pruebas-" + "x" * 40
 os.environ["DOCS_PUBLICAS"] = "false"
+os.environ["DISPOSITIVO_SOLO_LAN"] = "true"
+os.environ["HOSTS_PERMITIDOS"] = "testserver,localhost"
