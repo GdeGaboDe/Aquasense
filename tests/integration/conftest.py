@@ -24,6 +24,7 @@ from app.modelos import (
     Lectura,
     Nodo,
     NodoModulo,
+    Prediccion,
     Sensor,
     Tanque,
     Umbral,
@@ -34,6 +35,7 @@ from app.modelos import (
 IP_LAN = "192.168.1.50"
 # Del hijo hacia el padre: así ninguna llave foránea impide borrar.
 _TABLAS_CON_DATOS_DE_PRUEBA = (
+    Prediccion,
     Alerta,
     Umbral,
     ValorParametro,

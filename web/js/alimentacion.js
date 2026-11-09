@@ -36,6 +36,7 @@ let parametrosPrograma = [];
 let fecha = null;
 let intervaloComandoMs = 3000;
 let seguimiento = null;
+let comandoEnSeguimiento = null;
 
 const tanqueActual = () => tanques.find((t) => String(t.id) === selector.value);
 
@@ -88,10 +89,12 @@ async function mostrarTanque() {
 function detenerSeguimiento() {
   clearTimeout(seguimiento);
   seguimiento = null;
+  comandoEnSeguimiento = null;
   botonDispensar.disabled = false;
 }
 
 async function seguirComando(comandoId) {
+  comandoEnSeguimiento = comandoId;
   const tanque = tanqueActual();
   try {
     const datos = await pedir(`/api/v1/comandos?nodo_id=${tanque.nodo.id}&tamano=5`);
@@ -121,6 +124,7 @@ async function dispensar(evento) {
       cuerpo: { nodo_id: tanque.nodo.id, tipo: "DISPENSAR", argumento: Number(document.getElementById("cargas").value) },
     });
     estadoComando.textContent = TEXTO_ESTADO[comando.estado];
+    comandoEnSeguimiento = comando.id;
     seguimiento = setTimeout(() => seguirComando(comando.id), intervaloComandoMs);
   } catch (fallo) {
     estadoComando.textContent = fallo.message;
@@ -143,7 +147,11 @@ async function guardarPrograma(evento) {
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState !== "visible") clearTimeout(seguimiento);
+  clearTimeout(seguimiento);
+  // Al volver a la pestaña se retoma el seguimiento del comando que quedó en curso.
+  if (document.visibilityState === "visible" && comandoEnSeguimiento !== null) {
+    seguimiento = setTimeout(() => seguirComando(comandoEnSeguimiento), intervaloComandoMs);
+  }
 });
 
 /** La dosis y el nivel de la tolva llegan con la telemetría: se refrescan al ritmo del panel. */

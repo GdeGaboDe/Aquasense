@@ -8,6 +8,7 @@ from app.modelos.actividad import (
     Lectura,
     OrigenDosis,
     OrigenHora,
+    Prediccion,
     TipoComando,
 )
 from app.modelos.base import Base
@@ -28,6 +29,7 @@ __all__ = [
     "OrigenDosis",
     "OrigenHora",
     "Parametro",
+    "Prediccion",
     "Sensor",
     "Severidad",
     "Tanque",

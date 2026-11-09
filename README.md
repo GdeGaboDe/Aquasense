@@ -4,8 +4,9 @@ Plataforma web y base de datos para monitorear y controlar peceras con nodos ESP
 Sistemas Embebidos (UAEMéx). La especificación completa está en [CLAUDE.md](CLAUDE.md) y el contrato
 para el firmware en [docs/contrato-api.md](docs/contrato-api.md).
 
-**Disponible:** recepción de telemetría, alta de tanques y nodos, inicio de sesión, panel general y
-simulador del ESP32. **Falta:** alertas, comandos y parámetros (Fase 2); gráficas y predicción (Fase 3).
+**Disponible:** telemetría, alertas, comandos con confirmación, parámetros, umbrales, gráficas,
+cambios de agua y predicción, con sus pantallas web y el simulador del ESP32. **Falta:** la imagen de
+Docker para dejar todo listo para producción, y la verificación de las migraciones 0002 a 0004 en MySQL.
 
 ## Requisitos
 
@@ -67,6 +68,20 @@ cloudflared tunnel --url http://localhost:8000
 
 Agrega el host que muestre a `HOSTS_PERMITIDOS` y reinicia el servidor. La configuración definitiva
 está en la sección 14 de [CLAUDE.md](CLAUDE.md).
+
+## Desarrollo sin Docker
+
+Mientras no haya MySQL, se puede usar SQLite apuntando ambas URL a un archivo. Las variables de
+entorno tienen prioridad sobre `.env`, y `*.db` está en `.gitignore`:
+
+```bash
+export DATABASE_URL=sqlite:///aquasense_dev.db MIGRACIONES_DATABASE_URL=sqlite:///aquasense_dev.db
+alembic upgrade head
+```
+
+Las pruebas de integración también corren en SQLite con
+`TEST_DATABASE_URL=sqlite:///ruta/aquasense_test`. SQLite sirve para desarrollar: la referencia sigue
+siendo MySQL, que es lo que usa CI.
 
 ## Pruebas y calidad
 

@@ -61,7 +61,11 @@ function crearTarjeta(tanque) {
   const tarjeta = crear("article", "rounded-lg bg-white p-4 shadow");
   const encabezado = crear("div", "mb-3 flex items-start justify-between gap-2");
   const { texto, icono, clases } = ESTADOS[tanque.estado];
-  encabezado.append(crear("h2", "text-xl font-bold break-words", tanque.nombre), insignia(texto, icono, clases));
+  const titulo = crear("h2", "text-xl font-bold break-words");
+  const enlace = crear("a", "underline decoration-sky-700 underline-offset-4 hover:text-sky-900", tanque.nombre);
+  enlace.href = `/tanque.html?id=${encodeURIComponent(tanque.id)}`;
+  titulo.append(enlace);
+  encabezado.append(titulo, insignia(texto, icono, clases));
   tarjeta.append(encabezado);
   if (tanque.alertas.length > 0) tarjeta.append(crearAlertas(tanque.alertas));
   if (tanque.lecturas.length > 0) {

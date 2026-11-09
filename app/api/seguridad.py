@@ -13,7 +13,8 @@ _HSTS = "max-age=31536000; includeSubDomains"
 _CSP = "; ".join(
     [
         "default-src 'self'",
-        "script-src 'self' https://cdn.tailwindcss.com",
+        # Chart.js va fijado por versión en jsDelivr (ADR-006).
+        "script-src 'self' https://cdn.tailwindcss.com https://cdn.jsdelivr.net",
         # Tailwind por CDN genera sus estilos en una etiqueta <style> (ADR-006).
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data:",

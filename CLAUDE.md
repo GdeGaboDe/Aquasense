@@ -423,7 +423,13 @@ Un parámetro solo se puede asignar a un nodo que tenga su `modulo_requerido`.
   "estimación aún no confiable" y el baseline si existe. **Nunca** inventes un número.
 - **Evaluación sin fuga de datos:** división cronológica por ciclos (entrenar con ciclos viejos, evaluar con el último);
   nunca aleatoria. Métrica: MAE en días, comparada contra el baseline.
-- Se guarda una fila en `prediccion` como máximo una vez por hora por ciclo, con `modelo_version`.
+- Se guarda una fila en `prediccion` como máximo una vez por hora por ciclo, con `modelo_version`. Solo se guardan
+  estimaciones confiables.
+- Una pendiente menor que 1e-6 ppm/h, o un cruce a más de 10 años, se trata como "sin cruce": es ruido, no tendencia.
+- Cualquier cambio de agua, parcial o total, cierra el ciclo actual. Debe ser posterior al último registrado y no estar
+  en el futuro.
+- `GET /tanques/{id}/prediccion` incluye la evaluación sobre el último ciclo completo: una predicción por cada día de
+  datos, usando solo las lecturas hasta ese corte; el baseline solo conoce los ciclos anteriores.
 
 ---
 
@@ -438,7 +444,7 @@ Base: `/api/v1`. Autenticación por cookie de sesión. Todas las rutas (salvo lo
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/yo` | Sesión. Login con límite de 5 intentos por minuto por IP |
 | `GET /tanques` | Lista con estado actual: últimas lecturas, alertas activas, "sin conexión" |
 | `POST /tanques` · `PATCH /tanques/{id}` | Alta y edición (el alta registra el cambio de agua inicial) |
-| `GET /tanques/{id}/lecturas?variable=&desde=&hasta=&intervalo=` | Serie para gráficas, **agregada en el servidor** (promedio por intervalo: 1m, 5m, 1h). Máximo 2,000 puntos |
+| `GET /tanques/{id}/lecturas?variable=&desde=&hasta=&intervalo=` | Serie para gráficas, **agregada en el servidor** (promedio por intervalo: 1m, 5m, 1h). Máximo 2,000 puntos y 31 días. Excluye la hora `desconocida` salvo con `incluir_desconocidas=true` |
 | `GET /alertas?activa=&tanque_id=&pagina=&tamano=` | Paginado, máximo 100 por página |
 | `POST /comandos` · `GET /comandos?nodo_id=&pagina=` | Crear y consultar comandos |
 | `GET /nodos/{id}/parametros` · `PUT /nodos/{id}/parametros` | Configuración (valida y sube `config_version`) |

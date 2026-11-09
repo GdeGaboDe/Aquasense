@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Detalle del tanque · AquaSense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="module" src="/js/tanque.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <header class="bg-sky-900 text-white">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 p-4">
+        <p class="text-xl font-bold">AquaSense</p>
+        <button
+          id="salir"
+          type="button"
+          class="rounded border border-white px-3 py-2 font-medium hover:bg-sky-800"
+        >
+          Cerrar sesión
+        </button>
+        <nav aria-label="Principal" class="w-full overflow-x-auto">
+          <ul class="flex gap-1 text-base font-medium">
+            <li><a href="/" class="block rounded px-3 py-2 hover:bg-sky-800">Panel</a></li>
+            <li><a href="/alertas.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alertas</a></li>
+            <li><a href="/alimentacion.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alimentación</a></li>
+            <li><a href="/ajustes.html" class="block rounded px-3 py-2 hover:bg-sky-800">Ajustes</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl p-4">
+      <p class="mb-2"><a href="/" class="font-medium text-sky-900 underline">← Volver al panel</a></p>
+      <div class="mb-3 flex flex-wrap items-center gap-2">
+        <h1 id="titulo" class="text-2xl font-bold">Detalle del tanque</h1>
+        <span id="insignia"></span>
+      </div>
+      <p id="estado-carga" role="status" class="mb-3 text-slate-700">Cargando…</p>
+      <div id="aviso" role="alert" hidden></div>
+
+      <div id="contenido" hidden>
+        <section class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-prediccion">
+          <h2 id="titulo-prediccion" class="mb-2 text-xl font-bold">Próximo cambio de agua</h2>
+          <p id="prediccion-principal" class="text-lg font-semibold"></p>
+          <p id="prediccion-baseline" class="mt-1 text-slate-800"></p>
+          <details class="mt-2">
+            <summary class="cursor-pointer font-medium text-sky-900">Detalles del modelo</summary>
+            <dl id="prediccion-detalles" class="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-sm"></dl>
+          </details>
+
+          <h3 class="mb-2 mt-4 font-semibold">Registrar cambio de agua</h3>
+          <div id="aviso-cambio" role="alert" hidden></div>
+          <form id="form-cambio" class="flex flex-wrap items-end gap-3">
+            <div>
+              <label for="porcentaje" class="mb-1 block font-medium">Agua cambiada (%)</label>
+              <input id="porcentaje" type="number" min="1" max="100" step="1" value="100" required class="w-full rounded border border-slate-500 p-2 text-base" />
+            </div>
+            <button type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Registrar cambio</button>
+          </form>
+          <h3 class="mb-1 mt-4 font-semibold">Cambios recientes</h3>
+          <ul id="cambios" class="divide-y divide-slate-200 text-slate-800"></ul>
+        </section>
+
+        <section class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-graficas">
+          <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 id="titulo-graficas" class="text-xl font-bold">Gráficas</h2>
+            <div role="group" aria-label="Rango de tiempo" class="flex gap-2">
+              <button type="button" data-rango="6h" class="rounded border border-sky-800 px-3 py-2 font-medium text-sky-900 aria-pressed:bg-sky-800 aria-pressed:text-white" aria-pressed="false">6 h</button>
+              <button type="button" data-rango="24h" class="rounded border border-sky-800 px-3 py-2 font-medium text-sky-900 aria-pressed:bg-sky-800 aria-pressed:text-white" aria-pressed="true">24 h</button>
+              <button type="button" data-rango="7d" class="rounded border border-sky-800 px-3 py-2 font-medium text-sky-900 aria-pressed:bg-sky-800 aria-pressed:text-white" aria-pressed="false">7 días</button>
+            </div>
+          </div>
+          <p id="sin-graficas" class="text-slate-700" hidden>Este tanque todavía no reporta variables numéricas.</p>
+          <div id="graficas" class="grid gap-4 lg:grid-cols-2"></div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

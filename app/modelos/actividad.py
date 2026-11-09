@@ -100,3 +100,24 @@ class CambioAgua(Base):
     realizado_en: Mapped[datetime] = mapped_column(FechaUTC)
     porcentaje: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     registrado_por: Mapped[int] = mapped_column(ForeignKey("usuario.id"))
+
+
+class Prediccion(Base):
+    """Ajuste del modelo para un ciclo; los días restantes se calculan al consultar (3FN)."""
+
+    __tablename__ = "prediccion"
+    __table_args__ = (
+        CheckConstraint("n_muestras > 0", name="muestras_positivas"),
+        Index(None, "cambio_agua_id", "generada_en"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    cambio_agua_id: Mapped[int] = mapped_column(ForeignKey("cambio_agua.id"))
+    generada_en: Mapped[datetime] = mapped_column(FechaUTC)
+    modelo_version: Mapped[str] = mapped_column(String(20))
+    pendiente: Mapped[Decimal] = mapped_column(Numeric(14, 6))  # ppm por hora
+    intercepto: Mapped[Decimal] = mapped_column(Numeric(14, 6))  # ppm al iniciar el ciclo
+    limite_tds: Mapped[Decimal] = mapped_column(Numeric(10, 3))
+    r2: Mapped[Decimal | None] = mapped_column(Numeric(7, 6))
+    n_muestras: Mapped[int] = mapped_column(Integer)
+    baseline_dias: Mapped[Decimal | None] = mapped_column(Numeric(8, 3))

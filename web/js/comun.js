@@ -109,20 +109,36 @@ export async function iniciarPagina() {
   return { yo, fecha: (iso) => (iso ? formatoFecha.format(new Date(iso)) : "—") };
 }
 
-/** Repite una tarea cada `intervaloMs` solo mientras la pestaña está visible. */
+/**
+ * Repite una tarea cada `intervaloMs` solo mientras la pestaña está visible.
+ * Al volver a la pestaña solo consulta si ya pasó el intervalo: cambiar de app o de pestaña
+ * seguido no debe multiplicar las peticiones ni agotar el límite del servidor.
+ */
 export function repetirMientrasVisible(tarea, intervaloMs) {
   let temporizador = null;
-  const programar = () => {
+  let ultimaEjecucion = 0;
+  let enCurso = false;
+  const programar = (esperaMs) => {
     clearTimeout(temporizador);
-    if (document.visibilityState === "visible") temporizador = setTimeout(ejecutar, intervaloMs);
+    if (document.visibilityState === "visible") temporizador = setTimeout(ejecutar, esperaMs);
   };
   const ejecutar = async () => {
-    await tarea();
-    programar();
+    if (enCurso) return;
+    enCurso = true;
+    ultimaEjecucion = Date.now();
+    try {
+      await tarea();
+    } finally {
+      enCurso = false;
+    }
+    programar(intervaloMs);
   };
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") ejecutar();
-    else clearTimeout(temporizador);
+    if (document.visibilityState !== "visible") {
+      clearTimeout(temporizador);
+      return;
+    }
+    programar(Math.max(0, intervaloMs - (Date.now() - ultimaEjecucion)));
   });
   return { iniciar: ejecutar, detener: () => clearTimeout(temporizador) };
 }
