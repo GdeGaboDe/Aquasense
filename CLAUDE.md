@@ -26,6 +26,11 @@ Solo lo que **no es circuito**:
 **Fuera de alcance:** el firmware del ESP32 y el protocolo ESP-NOW entre nodos. El firmware solo nos importa a través
 del contrato de la sección 6, que es obligatorio para ambos lados.
 
+**Firmware actual:** el del equipo es un servidor web (`/datos`, `/abrir`, `/cerrar`), no cliente del contrato.
+`tools/puente_esp32.py` corre en la laptop y hace de nodo autónomo: lee `/datos`, envía la telemetría, ejecuta los
+`DISPENSAR` y responde los ACK (ver `docs/conexion-esp32.md`). Si el firmware llega a implementar el contrato, el puente
+deja de hacer falta.
+
 ### 1.2 Arquitectura física (contexto)
 
 ```

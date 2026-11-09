@@ -2,6 +2,7 @@
 #
 #   Todo:              docker compose up -d --build
 #   Con túnel:         docker compose --profile tunel up -d --build
+#   Con el puente para el firmware web actual: docker compose --profile puente up -d --build
 #   Solo MySQL (para desarrollar con la app en la laptop): docker compose up -d --wait mysql
 
 services:
@@ -51,6 +52,8 @@ services:
       # Usuario de mínimo privilegio; la URL de migraciones se deja vacía a propósito.
       DATABASE_URL: mysql+pymysql://aquasense_app:${MYSQL_APP_PASSWORD}@mysql:3306/aquasense
       MIGRACIONES_DATABASE_URL: ""
+      # "app" para el puente, que llama por la red de Docker; 127.0.0.1 para la revisión de salud.
+      HOSTS_PERMITIDOS: ${HOSTS_PERMITIDOS:-localhost},app,127.0.0.1
       IPS_PROXY_CONFIABLES: ${IP_TUNEL:-172.30.42.10}
       FORWARDED_ALLOW_IPS: ${IP_TUNEL:-172.30.42.10}
     ports:
@@ -74,6 +77,22 @@ services:
       aquasense:
         # IP fija: la app solo confía en los encabezados de proxy que vienen de aquí.
         ipv4_address: ${IP_TUNEL:-172.30.42.10}
+
+  # Puente con el firmware web actual del ESP32 (docs/conexion-esp32.md).
+  puente:
+    image: aquasense-app:local
+    profiles: [puente]
+    restart: unless-stopped
+    command: ["python", "tools/puente_esp32.py"]
+    environment:
+      PUENTE_SERVIDOR: http://app:8000
+      PUENTE_ESP32: ${PUENTE_ESP32:-}
+      PUENTE_MAC: ${PUENTE_MAC:-}
+      AQUASENSE_TOKEN: ${AQUASENSE_TOKEN:-}
+    depends_on:
+      app:
+        condition: service_healthy
+    networks: [aquasense]
 
 volumes:
   aquasense_datos:
