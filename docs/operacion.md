@@ -3,8 +3,8 @@
 Cómo dejar AquaSense funcionando 24/7 en la ThinkPad (CLAUDE.md, sección 14). Los comandos son para
 PowerShell. Los que cambian la configuración de Windows se corren **como administrador**.
 
-> **Estado:** los procedimientos de esta guía todavía no se han ensayado de punta a punta en la laptop.
-> Ensáyalos completos una vez antes de la primera demo, empezando por el respaldo y su restauración.
+> **Estado:** el respaldo y su restauración (sección 5) se ensayaron el 2026-11-09. El resto de la guía
+> (energía, firewall, arranque automático y túnel con nombre) todavía no se ha ensayado en la laptop.
 
 ## 1. Antes de guardar historial real
 
@@ -117,12 +117,14 @@ del repositorio (`*.sql` está en `.gitignore`), y **prueba la restauración**: 
 restaurado no cuenta como respaldo.
 
 El respaldo se genera dentro del contenedor y luego se copia, porque en PowerShell 5.1 la redirección
-`>` guarda en UTF-16 y el archivo ya no se puede restaurar.
+`>` guarda en UTF-16 y el archivo ya no se puede restaurar. Las consultas se pasan por la entrada
+estándar (`|`) porque PowerShell 5.1 quita las comillas dobles internas al llamar a otros programas.
+Estos comandos se ensayaron completos el 2026-11-09.
 
 **Respaldar:**
 
 ```powershell
-docker exec aquasense-mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --no-tablespaces --databases aquasense --result-file=/tmp/respaldo.sql'
+docker exec aquasense-mysql sh -c 'mysqldump -uroot -p$MYSQL_ROOT_PASSWORD --single-transaction --no-tablespaces --databases aquasense --result-file=/tmp/respaldo.sql 2>/dev/null'
 ```
 
 ```powershell
@@ -133,18 +135,21 @@ docker cp aquasense-mysql:/tmp/respaldo.sql "D:\Respaldos\aquasense_$(Get-Date -
 `aquasense` (por `--databases`), así que primero se cambia por `aquasense_restauracion`:
 
 ```powershell
-docker exec aquasense-mysql sh -c 'sed "s/\`aquasense\`/\`aquasense_restauracion\`/g" /tmp/respaldo.sql > /tmp/restauracion.sql && mysql -uroot -p"$MYSQL_ROOT_PASSWORD" < /tmp/restauracion.sql'
+docker exec aquasense-mysql sh -c 'sed ''s/`aquasense`/`aquasense_restauracion`/g'' /tmp/respaldo.sql > /tmp/restauracion.sql && mysql -uroot -p$MYSQL_ROOT_PASSWORD < /tmp/restauracion.sql 2>/dev/null'
 ```
 
 ```powershell
-docker exec aquasense-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT (SELECT COUNT(*) FROM aquasense.lectura) AS original, (SELECT COUNT(*) FROM aquasense_restauracion.lectura) AS restaurada"'
+"SELECT 'original', COUNT(*) FROM aquasense.lectura UNION ALL SELECT 'restaurada', COUNT(*) FROM aquasense_restauracion.lectura;" | docker exec -i aquasense-mysql sh -c 'mysql -N -uroot -p$MYSQL_ROOT_PASSWORD 2>/dev/null'
 ```
 
 Si los dos conteos coinciden, el respaldo sirve. Después borra la base de prueba:
 
 ```powershell
-docker exec aquasense-mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "DROP DATABASE aquasense_restauracion"'
+"DROP DATABASE aquasense_restauracion;" | docker exec -i aquasense-mysql sh -c 'mysql -uroot -p$MYSQL_ROOT_PASSWORD 2>/dev/null'
 ```
+
+Para restaurar de verdad un archivo guardado, cópialo al contenedor con `docker cp` y cárgalo con el
+mismo `mysql … < archivo`. Eso **sobrescribe** la base `aquasense`: hazlo solo si la actual está dañada.
 
 ## 6. Versiones
 
