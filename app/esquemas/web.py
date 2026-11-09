@@ -36,6 +36,7 @@ class UsuarioActual(BaseModel):
     usuario: str
     polling_panel_s: int
     polling_graficas_s: int
+    polling_comando_s: int
     zona_horaria: str
 
 
@@ -90,10 +91,22 @@ class NodoResumen(BaseModel):
     modulos: list[str]
 
 
+class AlertaActiva(BaseModel):
+    id: int
+    tipo: str
+    descripcion: str
+    severidad: Literal["info", "advertencia", "critica"]
+    variable_nombre: str | None
+    unidad: str | None
+    valor: float | None
+    iniciada_en: FechaIso
+
+
 class TanqueEstado(TanqueSalida):
     estado: Literal["en_linea", "sin_conexion", "sin_nodo"]
     nodo: NodoResumen | None
     lecturas: list[LecturaActual]
+    alertas: list[AlertaActiva]
 
 
 class NodoCrear(BaseModel):

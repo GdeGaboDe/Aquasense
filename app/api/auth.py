@@ -22,6 +22,7 @@ def _usuario_actual(nombre: str) -> UsuarioActual:
         usuario=nombre,
         polling_panel_s=settings.polling_panel_s,
         polling_graficas_s=settings.polling_graficas_s,
+        polling_comando_s=settings.polling_comando_s,
         zona_horaria=settings.zona_horaria_web,
     )
 

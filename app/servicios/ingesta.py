@@ -21,6 +21,7 @@ from app.esquemas.dispositivo import (
 )
 from app.modelos import Dosis, Lectura, Nodo, NodoModulo, Sensor, Variable
 from app.repositorios import ingesta as repo
+from app.servicios import alertas
 from app.servicios.errores import ErrorDeNegocio
 
 _MAC_NO_REGISTRADA = "MAC_NO_REGISTRADA"
@@ -115,6 +116,7 @@ def _procesar_lecturas(
     conteo: _Conteo,
 ) -> None:
     filas: dict[tuple[int, datetime], Lectura] = {}
+    contexto_alertas: dict[int, tuple[Nodo, Variable]] = {}
     for indice, lectura in enumerate(lecturas):
         motivo = _motivo_por_nodo(lectura.mac, contexto)
         variable = variables.get(lectura.variable)
@@ -147,6 +149,7 @@ def _procesar_lecturas(
         if llave in filas:
             conteo.duplicadas += 1
             continue
+        contexto_alertas[sensor_id] = (contexto.nodos_por_mac[lectura.mac], variable)
         filas[llave] = Lectura(
             sensor_id=sensor_id,
             medido_en=hora.medido_en,
@@ -157,6 +160,7 @@ def _procesar_lecturas(
 
     existentes = repo.lecturas_existentes(sesion, filas)
     nuevas = [fila for llave, fila in filas.items() if llave not in existentes]
+    alertas.evaluar_lecturas(sesion, nuevas, contexto_alertas)
     sesion.add_all(nuevas)
     conteo.aceptadas += len(nuevas)
     conteo.duplicadas += len(existentes)

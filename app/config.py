@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     zona_horaria_web: str = "America/Mexico_City"
     polling_panel_s: int = Field(default=10, gt=0)
     polling_graficas_s: int = Field(default=60, gt=0)
+    polling_comando_s: int = Field(default=3, gt=0)
 
     @field_validator("hosts_permitidos", mode="before")
     @classmethod

@@ -20,6 +20,7 @@ def test_login_correcto_entrega_datos_del_usuario_y_registra_el_acceso(cliente, 
         "usuario": USUARIO_DE_PRUEBA,
         "polling_panel_s": 10,
         "polling_graficas_s": 60,
+        "polling_comando_s": 3,
         "zona_horaria": "America/Mexico_City",
     }
     sesion.refresh(usuario)

@@ -17,6 +17,7 @@ from app.api.seguridad import limitador
 from app.config import obtener_settings
 from app.main import crear_app
 from app.modelos import (
+    Alerta,
     CambioAgua,
     Comando,
     Dosis,
@@ -25,12 +26,17 @@ from app.modelos import (
     NodoModulo,
     Sensor,
     Tanque,
+    Umbral,
     Usuario,
+    ValorParametro,
 )
 
 IP_LAN = "192.168.1.50"
 # Del hijo hacia el padre: así ninguna llave foránea impide borrar.
 _TABLAS_CON_DATOS_DE_PRUEBA = (
+    Alerta,
+    Umbral,
+    ValorParametro,
     Lectura,
     Sensor,
     NodoModulo,

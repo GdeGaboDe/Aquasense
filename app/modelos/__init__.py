@@ -12,9 +12,11 @@ from app.modelos.actividad import (
 )
 from app.modelos.base import Base
 from app.modelos.catalogos import Parametro, Severidad, TipoAlerta, TipoVariable, Variable
+from app.modelos.control import Alerta, Umbral, ValorParametro
 from app.modelos.instalacion import Nodo, NodoModulo, Sensor, Tanque, Usuario
 
 __all__ = [
+    "Alerta",
     "Base",
     "CambioAgua",
     "Comando",
@@ -32,6 +34,8 @@ __all__ = [
     "TipoAlerta",
     "TipoComando",
     "TipoVariable",
+    "Umbral",
     "Usuario",
+    "ValorParametro",
     "Variable",
 ]

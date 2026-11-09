@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from app.api import auth, dispositivo, nodos, salud, tanques
+from app.api import alertas, auth, comandos, dispositivo, nodos, salud, tanques
 from app.api.errores import registrar_manejadores
 from app.api.seguridad import EncabezadosDeSeguridad, limitador
 from app.config import Settings, obtener_settings
@@ -40,7 +40,7 @@ def crear_app(settings: Settings) -> FastAPI:
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.hosts_permitidos)
     app.add_middleware(EncabezadosDeSeguridad)
 
-    for modulo in (salud, dispositivo, auth, tanques, nodos):
+    for modulo in (salud, dispositivo, auth, tanques, nodos, alertas, comandos):
         app.include_router(modulo.router)
     # Al final: el montaje en "/" atrapa toda ruta que no sea de la API.
     app.mount("/", StaticFiles(directory=_DIRECTORIO_WEB, html=True), name="web")

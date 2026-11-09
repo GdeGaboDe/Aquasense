@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.dominio.conexion import esta_sin_conexion
 from app.esquemas.web import (
+    AlertaActiva,
     LecturaActual,
     NodoCrear,
     NodoEditar,
@@ -22,6 +23,7 @@ from app.esquemas.web import (
 )
 from app.modelos import CambioAgua, Nodo, Tanque
 from app.repositorios import instalacion as repo
+from app.servicios import alertas as servicio_alertas
 from app.servicios.errores import ErrorDeNegocio
 
 _BYTES_TOKEN = 30  # token_urlsafe produce 40 caracteres con 30 bytes
@@ -134,11 +136,19 @@ def estado_de_tanques(sesion: Session, ahora: datetime) -> list[TanqueEstado]:
             )
         )
 
+    activas = servicio_alertas.activas_por_tanque(sesion, [tanque.id for tanque, _ in filas])
     resultado = []
     for tanque, nodo in filas:
+        alertas_tanque = [
+            AlertaActiva.model_validate(a.model_dump()) for a in activas.get(tanque.id, [])
+        ]
         base = TanqueSalida.model_validate(tanque).model_dump()
         if nodo is None:
-            resultado.append(TanqueEstado(**base, estado="sin_nodo", nodo=None, lecturas=[]))
+            resultado.append(
+                TanqueEstado(
+                    **base, estado="sin_nodo", nodo=None, lecturas=[], alertas=alertas_tanque
+                )
+            )
             continue
         sin_conexion = esta_sin_conexion(nodo.ultimo_contacto, ahora)
         resultado.append(
@@ -156,6 +166,7 @@ def estado_de_tanques(sesion: Session, ahora: datetime) -> list[TanqueEstado]:
                     modulos=modulos.get(nodo.id, []),
                 ),
                 lecturas=lecturas.get(nodo.id, []),
+                alertas=alertas_tanque,
             )
         )
     return resultado

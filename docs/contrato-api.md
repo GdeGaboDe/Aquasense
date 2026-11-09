@@ -11,8 +11,8 @@ Referencia para quien programa el firmware. Base: `/api/v1/device`. Solo JSON.
 | Endpoint | Estado |
 |---|---|
 | `POST /telemetry` | Disponible |
-| `GET /config` | Fase 2: mientras tanto responde `404` |
-| `POST /ack` | Fase 2: mientras tanto responde `404` |
+| `GET /config` | Disponible |
+| `POST /ack` | Disponible |
 
 ## `POST /telemetry`
 
@@ -92,6 +92,54 @@ Se detectan duplicados por sensor y hora de medición (por nodo y hora en las do
 del arranque actual reenviada obtiene otra hora**, porque depende del momento de recepción, y no se
 detecta como duplicada. Para reenviar con seguridad, incluye `epoch_ms` y conserva el valor original.
 Una dosis ligada a un comando nunca se duplica.
+
+## `GET /config`
+
+```json
+{
+  "servidor_epoch_ms": 1793750400123,
+  "nodos": [
+    { "mac": "24:6F:28:AB:CD:EF", "config_version": 5,
+      "parametros": { "MODO_DISPENSA": "AUTOMATICO", "INTERVALO_ALIMENTACION_HORAS": 8, "CANTIDAD_CARGAS": 2 } }
+  ],
+  "comandos": [
+    { "id": 912, "mac": "24:6F:28:AB:CD:EF", "tipo": "DISPENSAR", "argumento": 2 }
+  ]
+}
+```
+
+- Incluye al autónomo y a sus satélites activos. El autónomo retransmite por ESP-NOW lo de cada satélite.
+- `parametros` trae **todos** los que aplican al nodo, con su valor vigente: el configurado o el de fábrica.
+  Solo aparecen los de los módulos que el nodo anunció. Enteros y decimales viajan como número; las
+  opciones, como texto.
+- Aplica la configuración cuando `config_version` sea mayor que la que tienes, y reporta la versión
+  aplicada en `nodos[].config_version_aplicada` del siguiente lote de telemetría.
+- `servidor_epoch_ms` sirve para ajustar el reloj si no hay NTP.
+- **Un comando se entrega una sola vez:** al aparecer aquí pasa a `entregado` y no se repite. Si se pierde,
+  no se reenvía. Un comando que no se entrega en 120 s expira.
+
+| Comando | `argumento` | Módulo |
+|---|---|---|
+| `DISPENSAR` | cargas, de 1 a 5 | `servo` |
+| `SILENCIAR_ALARMA` | minutos, de 1 a 60 | `alarma` |
+| `AIREADOR` | `0` apagar, `1` encender | `aireador` |
+
+## `POST /ack`
+
+```json
+{ "comando_id": 912, "resultado": "confirmado", "detalle": null }
+```
+
+- `resultado`: `confirmado` o `fallido`. `detalle`: texto opcional de hasta 200 caracteres.
+- Respuesta `200`: `{"comando_id": 912, "estado": "confirmado"}`.
+- Repetir el mismo ACK no cambia nada: reintenta sin miedo si no recibiste respuesta.
+- Al ejecutar un `DISPENSAR`, envía también el evento `dosis` con su `comando_id` y `origen: "remoto"`.
+
+| Código | Cuándo |
+|---|---|
+| 403 `COMANDO_AJENO` | El comando no es de este autónomo ni de sus satélites |
+| 404 `COMANDO_NO_ENCONTRADO` | No existe ese comando |
+| 409 `ACK_INVALIDO` | El ACK contradice el estado: otro resultado ya registrado, o comando expirado |
 
 ## Errores
 

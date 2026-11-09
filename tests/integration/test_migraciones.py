@@ -35,6 +35,8 @@ def test_restricciones_check_conservan_el_nombre_de_la_convencion(engine: Engine
         "ck_nodo_token_solo_en_autonomo",
         "ck_dosis_cargas_positivas",
         "ck_cambio_agua_porcentaje_valido",
+        "ck_umbral_rango",
+        "ck_umbral_histeresis_no_negativa",
     }
 
 

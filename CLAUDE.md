@@ -376,7 +376,11 @@ aplica el paso 3. Redondea `medido_en` a milisegundos.
   Se resuelve cuando el valor regresa a `[minimo + histeresis, maximo − histeresis]`.
 - `flotador_bajo = 1` → `NIVEL_BAJO`. `tolva_vacia = 1` → `TOLVA_VACIA`. Se resuelven al volver a `0`.
 - Nunca dos alertas activas iguales (mismo tanque, tipo y variable).
-- Un comando `fallido` o `expirado` genera `COMANDO_FALLIDO`.
+- Un comando `fallido` o `expirado` genera `COMANDO_FALLIDO`; se resuelve cuando un comando posterior del mismo
+  tanque se confirma.
+- Solo se evalúa la lectura más reciente de cada sensor en el lote, y solo si es más nueva que la última guardada
+  con hora confiable: las lecturas atrasadas de LittleFS y las de hora `desconocida` no abren ni cierran alertas.
+- La regla de una alerta activa se impone en la base con un índice único sobre columnas generadas.
 - **Nodo sin reportar:** si `ultimo_contacto` es más antiguo que 3 veces la cadencia (30 s), el estado del tanque se
   muestra como "sin conexión". Se calcula **al consultar**; no hay tareas en segundo plano.
 
@@ -387,7 +391,10 @@ Estados: `pendiente → entregado → confirmado | fallido`; `pendiente → expi
 - Un comando `pendiente` expira 120 s después de creado si no se entregó.
 - Un comando `entregado` sin ACK en 60 s se muestra como "sin confirmar" en la web, pero **no se reenvía**.
 - **Seguridad:** un `DISPENSAR` nunca se reenvía automáticamente. Mejor no dispensar que dar doble ración.
-- Solo un `DISPENSAR` activo (`pendiente` o `entregado`) por nodo a la vez; otro intento responde `409`.
+- Solo un `DISPENSAR` activo por nodo a la vez; otro intento responde `409`. Activo significa `pendiente`, o
+  `entregado` sin llegar todavía a "sin confirmar": si un ACK perdido lo dejara activo para siempre, no se podría
+  volver a alimentar desde la web.
+- La expiración se aplica al consultar (configuración del nodo o lista de comandos): no hay tareas en segundo plano.
 - Al confirmar un `DISPENSAR`, se espera el evento `dosis` con ese `comando_id`; si llega, se liga.
 
 | Tipo | Argumento | Requiere módulo |
