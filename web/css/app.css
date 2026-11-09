@@ -13,3 +13,8 @@
 [hidden] {
   display: none !important;
 }
+
+/* Sobre la cabecera oscura el ámbar no alcanza 3:1; ahí el foco va en ámbar claro (11:1). */
+header :focus-visible {
+  outline-color: #fde68a;
+}

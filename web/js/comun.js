@@ -98,6 +98,11 @@ function activarSalida() {
  * en la zona horaria del servidor. Redirige al login si la sesión no es válida.
  */
 export async function iniciarPagina() {
+  // Al volver con "Atrás" el navegador puede restaurar la página desde su caché, con datos viejos y
+  // aunque la sesión ya se cerró. Recargar obliga a pedir los datos otra vez: sin sesión, va al login.
+  window.addEventListener("pageshow", (evento) => {
+    if (evento.persisted) window.location.reload();
+  });
   marcarNavegacion();
   activarSalida();
   const yo = await pedir("/api/v1/auth/yo");

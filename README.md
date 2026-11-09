@@ -4,9 +4,26 @@ Plataforma web y base de datos para monitorear y controlar peceras con nodos ESP
 Sistemas Embebidos (UAEMéx). La especificación completa está en [CLAUDE.md](CLAUDE.md) y el contrato
 para el firmware en [docs/contrato-api.md](docs/contrato-api.md).
 
+| Documento | Contenido |
+|---|---|
+| [docs/contrato-api.md](docs/contrato-api.md) | API del ESP32: telemetría, configuración, comandos y ACK |
+| [docs/operacion.md](docs/operacion.md) | Dejar la laptop 24/7: arranque, túnel, firewall, respaldos |
+| [docs/checklist-demo.md](docs/checklist-demo.md) | Qué revisar en el celular antes de cada demo |
+| [docs/adr/](docs/adr/) | Decisiones de arquitectura (ADR-001 a ADR-006) |
+
 **Disponible:** telemetría, alertas, comandos con confirmación, parámetros, umbrales, gráficas,
 cambios de agua y predicción, con sus pantallas web y el simulador del ESP32. **Falta:** la imagen de
 Docker para dejar todo listo para producción, y la verificación de las migraciones 0002 a 0004 en MySQL.
+
+## Pantallas
+
+| Pantalla | Qué hace |
+|---|---|
+| Panel general | Una tarjeta por tanque: valores actuales, estado de conexión y alertas activas |
+| Detalle del tanque | Gráficas (6 h, 24 h, 7 días), predicción del cambio de agua y registro de cambios |
+| Alertas | Activas e historial, con filtros por estado y tanque |
+| Alimentación | "Dispensar ahora" con su estado en vivo, programa, bitácora de dosis y tolva |
+| Ajustes | Umbrales, parámetros por nodo, control manual y alta de tanques y nodos |
 
 ## Requisitos
 

@@ -37,6 +37,7 @@ _SEGUNDOS_POR_DIA = 86400
 
 # La evaluación recorre un ciclo completo; su resultado no cambia mientras no cambien los ciclos.
 _cache_evaluaciones: dict[tuple, modelo.Evaluacion | None] = {}
+_MAX_EVALUACIONES_EN_CACHE = 64
 
 
 def _obtener_tanque(sesion: Session, tanque_id: int) -> Tanque:
@@ -163,6 +164,8 @@ def _evaluacion(
         ciclos.append(
             modelo.Ciclo(inicio, fin, repo.lecturas_de_sensor(sesion, sensor_id, inicio, fin))
         )
+        if len(_cache_evaluaciones) >= _MAX_EVALUACIONES_EN_CACHE:
+            _cache_evaluaciones.clear()  # Cambian pocas veces: vaciar es más simple que un LRU.
         _cache_evaluaciones[llave] = modelo.evaluar(ciclos, limite)
     return _cache_evaluaciones[llave]
 
