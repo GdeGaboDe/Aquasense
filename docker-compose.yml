@@ -58,7 +58,7 @@ services:
       FORWARDED_ALLOW_IPS: ${IP_TUNEL:-172.30.42.10}
     ports:
       # Toda la red local: el ESP32 llega por aquí. El firewall de Windows limita el acceso a esa red.
-      - "${PUERTO_APP:-8000}:8000"
+      - "${PUERTO_APP:-8010}:8000"
     depends_on:
       migraciones:
         condition: service_completed_successfully

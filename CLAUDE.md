@@ -644,9 +644,9 @@ la laptop hacia Cloudflare, que entrega una URL pública con HTTPS. No se abren 
 
 ### 14.1 Servidor en la laptop
 
-- `uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1`
+- `uvicorn app.main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips 127.0.0.1`
 - Router con canal WiFi fijo en 2.4 GHz y la IP de la laptop reservada (el ESP32 la usa).
-- Firewall de Windows: permitir el puerto 8000 **solo desde la red local** (perfil privado), para el ESP32.
+- Firewall de Windows: permitir el puerto 8010 **solo desde la red local** (perfil privado), para el ESP32.
 - La laptop no se suspende; `cloudflared` y la app arrancan solos al iniciar Windows.
 
 ### 14.2 Túnel: dos modos
@@ -654,7 +654,7 @@ la laptop hacia Cloudflare, que entrega una URL pública con HTTPS. No se abren 
 | Modo | Cómo | URL | Para qué |
 |---|---|---|---|
 | **Túnel con nombre (recomendado)** | Cuenta gratuita de Cloudflare + un dominio propio gestionado en Cloudflare; `cloudflared` instalado como servicio | Fija, p. ej. `https://aquasense.midominio.com` | Que la URL no cambie y se pueda compartir con el profe y el equipo |
-| **Quick Tunnel (respaldo)** | `cloudflared tunnel --url http://localhost:8000`, sin cuenta | Aleatoria en `trycloudflare.com`, **cambia cada vez que se reinicia** | Pruebas o emergencia el día de la demo. Cloudflare lo marca como solo para pruebas y sin garantía de disponibilidad |
+| **Quick Tunnel (respaldo)** | `cloudflared tunnel --url http://localhost:8010`, sin cuenta | Aleatoria en `trycloudflare.com`, **cambia cada vez que se reinicia** | Pruebas o emergencia el día de la demo. Cloudflare lo marca como solo para pruebas y sin garantía de disponibilidad |
 
 - Al cambiar de URL, actualizar `HOSTS_PERMITIDOS`.
 - **No usar el plan gratuito de ngrok:** tiene un límite mensual de peticiones HTTP que el polling de la web agota en

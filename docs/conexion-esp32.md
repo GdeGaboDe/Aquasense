@@ -44,7 +44,7 @@ ESP32 (firmware web) ◄── /datos, /abrir, /cerrar ── puente (laptop) �
    docker compose --profile puente up -d --build
    ```
 
-   Sin Docker: `python tools/puente_esp32.py --servidor http://localhost:8000` (lee las mismas variables).
+   Sin Docker: `python tools/puente_esp32.py --servidor http://localhost:8010` (lee las mismas variables).
 7. **Comprueba:**
    - En el panel, el tanque aparece "En línea" con luz, TDS, nivel de agua y tolva.
    - `docker compose logs -f puente` muestra `Lote N: … aceptadas`.

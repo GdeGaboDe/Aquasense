@@ -7,7 +7,7 @@ móviles y sin WiFi**: así se prueba lo mismo que verá cualquier persona fuera
 
 - [ ] Respaldo de hoy hecho **y restaurado** en una base de prueba (`docs/operacion.md`, sección 5).
 - [ ] La laptop está conectada a la corriente y no se suspende.
-- [ ] `http://localhost:8000/health` responde `"base_de_datos":"conectada"`, y es AquaSense, no otro
+- [ ] `http://localhost:8010/health` responde `"base_de_datos":"conectada"`, y es AquaSense, no otro
       programa en el mismo puerto.
 - [ ] `cloudflared` está corriendo y la URL pública está en `HOSTS_PERMITIDOS`.
 - [ ] El nodo autónomo está encendido y en la misma red; su última lectura tiene menos de 30 s.

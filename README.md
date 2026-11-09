@@ -35,7 +35,7 @@ docker compose run --rm app python -m tools.crear_admin --usuario admin
 ```
 
 Levanta MySQL, aplica las migraciones con su propio usuario y arranca la app en el puerto `PUERTO_APP`
-(8000 por defecto). Para el túnel con nombre agrega `CLOUDFLARE_TUNNEL_TOKEN` al `.env` y usa
+(8010 por defecto). Para el túnel con nombre agrega `CLOUDFLARE_TUNNEL_TOKEN` al `.env` y usa
 `docker compose --profile tunel up -d`. Los detalles están en [docs/operacion.md](docs/operacion.md).
 
 ## Requisitos
@@ -58,10 +58,10 @@ python -m tools.crear_admin --usuario admin
 ## Correr el servidor
 
 ```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1
+uvicorn app.main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips 127.0.0.1
 ```
 
-Abre <http://localhost:8000>. Si otro programa ya usa el puerto 8000, en Windows ambos pueden quedar
+Abre <http://localhost:8010>. Si otro programa ya usa el puerto 8010, en Windows ambos pueden quedar
 escuchando sin ningún error: comprueba que `/health` responda
 `{"estado":"ok","base_de_datos":"conectada"}` o cambia de puerto.
 
@@ -93,7 +93,7 @@ la asignación de hora. `python tools/simulador_esp32.py --help` muestra todas l
 Prueba rápida, sin cuenta, con una URL que cambia en cada reinicio:
 
 ```bash
-cloudflared tunnel --url http://localhost:8000
+cloudflared tunnel --url http://localhost:8010
 ```
 
 Agrega el host que muestre a `HOSTS_PERMITIDOS` y reinicia el servidor. La configuración definitiva

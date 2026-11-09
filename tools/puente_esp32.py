@@ -309,7 +309,7 @@ def _crear_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--servidor",
-        default=os.environ.get("PUENTE_SERVIDOR", "http://localhost:8000"),
+        default=os.environ.get("PUENTE_SERVIDOR", "http://localhost:8010"),
         help="URL local de AquaSense (o PUENTE_SERVIDOR)",
     )
     esp32 = os.environ.get("PUENTE_ESP32")

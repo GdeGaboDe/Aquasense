@@ -4,7 +4,7 @@ Solo usa la biblioteca estándar y no importa nada de `app`: habla con el servid
 igual que el ESP32.
 
 Ejemplo:
-    python tools/simulador_esp32.py --url http://localhost:8000 --token TOKEN \
+    python tools/simulador_esp32.py --url http://localhost:8010 --token TOKEN \
         --mac 24:6F:28:AB:CD:EF --satelite 24:6F:28:11:22:33=temp,turbidez,flotador,alarma
 """
 
@@ -252,7 +252,7 @@ def _leer_satelite(texto: str) -> Nodo:
 
 def _crear_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Simula un ESP32 autónomo con sus satélites.")
-    parser.add_argument("--url", default="http://localhost:8000", help="URL local del servidor")
+    parser.add_argument("--url", default="http://localhost:8010", help="URL local del servidor")
     token = os.environ.get("AQUASENSE_TOKEN")
     parser.add_argument(
         "--token",

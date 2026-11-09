@@ -59,14 +59,14 @@ powercfg /change standby-timeout-ac 0
 powercfg /change hibernate-timeout-ac 0
 ```
 
-- **Puerto 8000 abierto solo para la red local**, para el ESP32:
+- **Puerto 8010 abierto solo para la red local**, para el ESP32:
 
 ```powershell
-New-NetFirewallRule -DisplayName "AquaSense ESP32" -Direction Inbound -Protocol TCP -LocalPort 8000 -Profile Private -RemoteAddress LocalSubnet -Action Allow
+New-NetFirewallRule -DisplayName "AquaSense ESP32" -Direction Inbound -Protocol TCP -LocalPort 8010 -Profile Private -RemoteAddress LocalSubnet -Action Allow
 ```
 
-- **Puerto 8000 libre:** si otro proyecto lo usa (por ejemplo, un contenedor de Docker), en Windows
-  ambos pueden quedar escuchando sin error. Comprueba que `http://localhost:8000/health` responda
+- **Puerto 8010 libre:** si otro proyecto lo usa (por ejemplo, un contenedor de Docker), en Windows
+  ambos pueden quedar escuchando sin error. Comprueba que `http://localhost:8010/health` responda
   `"base_de_datos":"conectada"`.
 
 ## 3. Arranque automático
@@ -77,7 +77,7 @@ contenedores tienen `restart: unless-stopped`.
 Sin Docker para la app, una tarea programada que corra al iniciar sesión. Ajusta la ruta del proyecto:
 
 ```powershell
-$accion = New-ScheduledTaskAction -Execute "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code\.venv\Scripts\python.exe" -Argument "-m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1" -WorkingDirectory "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code"
+$accion = New-ScheduledTaskAction -Execute "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code\.venv\Scripts\python.exe" -Argument "-m uvicorn app.main:app --host 0.0.0.0 --port 8010 --proxy-headers --forwarded-allow-ips 127.0.0.1" -WorkingDirectory "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code"
 ```
 
 ```powershell
@@ -93,7 +93,7 @@ Con Docker: crea el túnel en el panel apuntando a `http://app:8000`, pon su tok
 la app sin Docker.
 
 1. En el panel de Cloudflare, con un dominio propio: **Zero Trust → Networks → Tunnels → Create**.
-2. Asigna un nombre público, por ejemplo `aquasense.tudominio.com`, apuntando a `http://127.0.0.1:8000`.
+2. Asigna un nombre público, por ejemplo `aquasense.tudominio.com`, apuntando a `http://127.0.0.1:8010`.
    Debe ser `127.0.0.1`, no `localhost`, porque es la única IP de la que el servidor acepta encabezados
    de proxy.
 3. Instala el servicio de Windows con el token que da el panel, para que arranque solo:
@@ -107,7 +107,7 @@ cloudflared service install <token-del-panel>
 Para pruebas rápidas sigue sirviendo el Quick Tunnel; recuerda que su URL cambia en cada reinicio:
 
 ```powershell
-& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --no-autoupdate --url http://127.0.0.1:8000
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --no-autoupdate --url http://127.0.0.1:8010
 ```
 
 ## 5. Respaldo y restauración
