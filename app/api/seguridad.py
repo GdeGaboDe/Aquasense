@@ -6,9 +6,9 @@ from slowapi import Limiter
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.config import obtener_settings
 from app.servicios.errores import ErrorDeNegocio
 
-_IP_DEL_TUNEL = "127.0.0.1"
 _HSTS = "max-age=31536000; includeSubDomains"
 _CSP = "; ".join(
     [
@@ -46,7 +46,7 @@ ENCABEZADOS_BASE = {
 def ip_cliente(request: Request) -> str:
     """IP real: `CF-Connecting-IP` solo se cree si la conexión viene de cloudflared."""
     host = request.client.host if request.client else "desconocida"
-    if host == _IP_DEL_TUNEL:
+    if host in obtener_settings().ips_proxy_confiables:
         return request.headers.get("cf-connecting-ip", host)
     return host
 

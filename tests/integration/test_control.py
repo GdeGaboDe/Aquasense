@@ -42,7 +42,8 @@ def _dispensar(cliente, nodo_id, cargas=2):
 
 
 def _alertas_activas(sesion: Session) -> list[tuple[str, int | None]]:
-    sesion.expire_all()
+    # Cierra la transacción: con REPEATABLE READ, MySQL seguiría mostrando la foto anterior.
+    sesion.rollback()
     consulta = (
         select(TipoAlerta.codigo, Alerta.variable_id)
         .join(TipoAlerta, TipoAlerta.id == Alerta.tipo_alerta_id)

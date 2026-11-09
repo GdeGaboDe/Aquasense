@@ -530,9 +530,10 @@ es obligatorio, no opcional.
   - La web y su API son accesibles desde la URL pública, siempre con sesión.
 - **Hosts permitidos:** `TrustedHostMiddleware` con la URL pública, la IP local de la laptop y `localhost`
   (`HOSTS_PERMITIDOS`). Cualquier otro `Host` responde `400`.
-- **IP real del cliente:** `cloudflared` se conecta a la app desde `127.0.0.1`. Para el límite de intentos, la IP del
-  cliente se toma de `CF-Connecting-IP` **solo** si la petición viene de `127.0.0.1`; nunca se confía en ese header
-  si viene de otra IP. Uvicorn arranca con `--proxy-headers --forwarded-allow-ips 127.0.0.1`.
+- **IP real del cliente:** la IP del cliente se toma de `CF-Connecting-IP` **solo** si la petición viene del proxy de
+  confianza (`IPS_PROXY_CONFIABLES`); nunca se confía en ese header si viene de otra IP. Sin Docker es `127.0.0.1` y
+  uvicorn arranca con `--proxy-headers --forwarded-allow-ips 127.0.0.1`. Con Docker, `cloudflared` corre en su propio
+  contenedor con IP fija y uvicorn recibe esa IP por `FORWARDED_ALLOW_IPS`.
 - **Límites de peticiones:** login 5 por minuto por IP; resto de la API web 120 por minuto por IP; respuesta `429`.
 - **Documentación de la API** (`/docs`, `/openapi.json`) desactivada fuera de desarrollo (`DOCS_PUBLICAS=false`).
 - **No indexar:** `<meta name="robots" content="noindex">` y `robots.txt` con `Disallow: /`.

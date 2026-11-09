@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 
 from tests.integration.conftest import CONTRASENA_DE_PRUEBA, USUARIO_DE_PRUEBA
@@ -122,3 +124,22 @@ def test_robots_prohibe_indexar(cliente):
 def test_la_api_no_se_guarda_en_cache_y_la_web_se_revalida(cliente):
     assert cliente.get("/api/v1/tanques").headers["cache-control"] == "no-store"
     assert cliente.get("/js/api.js").headers["cache-control"] == "no-cache"
+
+
+def test_cf_connecting_ip_se_cree_desde_la_ip_configurada_del_tunel(
+    crear_cliente, usuario, monkeypatch
+):
+    monkeypatch.setattr(
+        "app.api.seguridad.obtener_settings",
+        lambda: SimpleNamespace(ips_proxy_confiables=["172.30.42.10"]),
+    )
+    cliente = crear_cliente(ip="172.30.42.10")
+
+    codigos = [
+        cliente.post(
+            LOGIN, json=INCORRECTAS, headers={"CF-Connecting-IP": f"8.8.8.{numero}"}
+        ).status_code
+        for numero in range(6)
+    ]
+
+    assert codigos == [401] * 6

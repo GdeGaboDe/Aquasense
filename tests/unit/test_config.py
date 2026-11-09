@@ -44,3 +44,15 @@ def test_por_defecto_es_produccion_con_docs_cerradas_y_dispositivo_solo_lan(monk
     assert settings.entorno == "produccion"
     assert settings.docs_publicas is False
     assert settings.dispositivo_solo_lan is True
+
+
+def test_ips_de_proxy_confiables_por_defecto_son_solo_locales(monkeypatch):
+    monkeypatch.delenv("IPS_PROXY_CONFIABLES", raising=False)
+
+    assert _settings().ips_proxy_confiables == ["127.0.0.1", "::1"]
+
+
+def test_ips_de_proxy_confiables_se_separan_por_coma(monkeypatch):
+    monkeypatch.setenv("IPS_PROXY_CONFIABLES", "172.30.42.10, 127.0.0.1")
+
+    assert _settings().ips_proxy_confiables == ["172.30.42.10", "127.0.0.1"]

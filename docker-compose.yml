@@ -1,3 +1,9 @@
+# AquaSense completo: MySQL, migraciones, la app y (opcional) el túnel de Cloudflare.
+#
+#   Todo:              docker compose up -d --build
+#   Con túnel:         docker compose --profile tunel up -d --build
+#   Solo MySQL (para desarrollar con la app en la laptop): docker compose up -d --wait mysql
+
 services:
   mysql:
     image: mysql:8.4
@@ -8,7 +14,7 @@ services:
       MYSQL_APP_PASSWORD: ${MYSQL_APP_PASSWORD:?Falta en .env}
       MYSQL_MIGRACIONES_PASSWORD: ${MYSQL_MIGRACIONES_PASSWORD:?Falta en .env}
     ports:
-      # Solo local: la app corre en la misma laptop y la base no se expone a la red
+      # Solo local: la base no se expone a la red
       - "127.0.0.1:3306:3306"
     volumes:
       - aquasense_datos:/var/lib/mysql
@@ -18,6 +24,62 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+    networks: [aquasense]
+
+  # Corre las migraciones y termina. Es el único contenedor con el usuario que puede cambiar el esquema.
+  migraciones:
+    build: .
+    image: aquasense-app:local
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    environment:
+      MIGRACIONES_DATABASE_URL: mysql+pymysql://aquasense_migraciones:${MYSQL_MIGRACIONES_PASSWORD}@mysql:3306/aquasense
+      DATABASE_URL: mysql+pymysql://aquasense_app:${MYSQL_APP_PASSWORD}@mysql:3306/aquasense
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: "no"
+    networks: [aquasense]
+
+  app:
+    build: .
+    image: aquasense-app:local
+    container_name: aquasense-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Usuario de mínimo privilegio; la URL de migraciones se deja vacía a propósito.
+      DATABASE_URL: mysql+pymysql://aquasense_app:${MYSQL_APP_PASSWORD}@mysql:3306/aquasense
+      MIGRACIONES_DATABASE_URL: ""
+      IPS_PROXY_CONFIABLES: ${IP_TUNEL:-172.30.42.10}
+      FORWARDED_ALLOW_IPS: ${IP_TUNEL:-172.30.42.10}
+    ports:
+      # Toda la red local: el ESP32 llega por aquí. El firewall de Windows limita el acceso a esa red.
+      - "${PUERTO_APP:-8000}:8000"
+    depends_on:
+      migraciones:
+        condition: service_completed_successfully
+    networks: [aquasense]
+
+  # Túnel con nombre (URL fija). Se configura en el panel de Cloudflare apuntando a http://app:8000.
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.7
+    profiles: [tunel]
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on: [app]
+    networks:
+      aquasense:
+        # IP fija: la app solo confía en los encabezados de proxy que vienen de aquí.
+        ipv4_address: ${IP_TUNEL:-172.30.42.10}
 
 volumes:
   aquasense_datos:
+
+networks:
+  aquasense:
+    ipam:
+      config:
+        - subnet: 172.30.42.0/24

@@ -12,8 +12,8 @@ para el firmware en [docs/contrato-api.md](docs/contrato-api.md).
 | [docs/adr/](docs/adr/) | Decisiones de arquitectura (ADR-001 a ADR-006) |
 
 **Disponible:** telemetría, alertas, comandos con confirmación, parámetros, umbrales, gráficas,
-cambios de agua y predicción, con sus pantallas web y el simulador del ESP32. **Falta:** la imagen de
-Docker para dejar todo listo para producción, y la verificación de las migraciones 0002 a 0004 en MySQL.
+cambios de agua y predicción, con sus pantallas web y el simulador del ESP32. Todo corre en
+contenedores con un solo comando, y las pruebas pasan contra MySQL.
 
 ## Pantallas
 
@@ -24,6 +24,18 @@ Docker para dejar todo listo para producción, y la verificación de las migraci
 | Alertas | Activas e historial, con filtros por estado y tanque |
 | Alimentación | "Dispensar ahora" con su estado en vivo, programa, bitácora de dosis y tolva |
 | Ajustes | Umbrales, parámetros por nodo, control manual y alta de tanques y nodos |
+
+## Arranque rápido con Docker
+
+```bash
+cp .env.example .env            # y reemplaza cada CAMBIAR y SECRET_KEY
+docker compose up -d --build --wait
+docker compose run --rm app python -m tools.crear_admin --usuario admin
+```
+
+Levanta MySQL, aplica las migraciones con su propio usuario y arranca la app en el puerto `PUERTO_APP`
+(8000 por defecto). Para el túnel con nombre agrega `CLOUDFLARE_TUNNEL_TOKEN` al `.env` y usa
+`docker compose --profile tunel up -d`. Los detalles están en [docs/operacion.md](docs/operacion.md).
 
 ## Requisitos
 
@@ -37,7 +49,7 @@ python -m venv .venv
 source .venv/Scripts/activate   # Windows con Git Bash; en Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env            # y reemplaza cada CAMBIAR y SECRET_KEY
-docker compose up -d --wait
+docker compose up -d --wait mysql
 alembic upgrade head
 python -m tools.crear_admin --usuario admin
 ```

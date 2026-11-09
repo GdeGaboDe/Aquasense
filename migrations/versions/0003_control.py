@@ -96,6 +96,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("valor_parametro")
-    op.drop_index(op.f("ix_alerta_tanque_id_resuelta_en"), table_name="alerta")
+    # Sin drop_index previo: MySQL lo rechaza porque la llave foránea de tanque_id usa el índice.
     op.drop_table("alerta")
     op.drop_table("umbral")

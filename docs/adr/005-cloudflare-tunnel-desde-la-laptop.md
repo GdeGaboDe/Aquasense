@@ -31,8 +31,9 @@ con HTTPS. **El ESP32 siempre usa la IP local** de la laptop, nunca la URL públ
 
 - **La API del dispositivo solo acepta la red local:** responde `403` a lo que llega por el túnel (trae
   `CF-Connecting-IP` o `X-Forwarded-For`) o desde una IP pública (`DISPOSITIVO_SOLO_LAN`).
-- **La IP real del cliente** se toma de `CF-Connecting-IP` solo si la conexión viene de `127.0.0.1`.
-  Uvicorn arranca con `--proxy-headers --forwarded-allow-ips 127.0.0.1`.
+- **La IP real del cliente** se toma de `CF-Connecting-IP` solo si la conexión viene del proxy de confianza
+  (`IPS_PROXY_CONFIABLES`). Sin Docker es `127.0.0.1`. En Docker, `cloudflared` corre en su propio
+  contenedor con IP fija (`172.30.42.10`), y uvicorn recibe la misma lista por `FORWARDED_ALLOW_IPS`.
 - **`HOSTS_PERMITIDOS`** debe incluir la URL pública; con el Quick Tunnel hay que actualizarla en cada
   reinicio.
 - **Riesgo aceptado:** el tramo ESP32–laptop va por HTTP dentro de la red local, porque el ESP32 no maneja

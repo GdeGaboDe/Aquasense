@@ -18,6 +18,33 @@ PowerShell. Los que cambian la configuración de Windows se corren **como admini
    y la IP local de la laptop.
 5. **Fija los umbrales de cada tanque** en Ajustes, incluido el máximo de TDS: sin él no hay predicción.
 
+## 1.1 Con Docker (recomendado)
+
+```powershell
+docker compose up -d --build --wait
+```
+
+- **`mysql`**: la base, con su volumen de datos.
+- **`migraciones`**: aplica las migraciones con el usuario que puede cambiar el esquema, y termina.
+- **`app`**: la aplicación, solo con el usuario de mínimo privilegio, en el puerto `PUERTO_APP` de la laptop.
+  Corre como usuario sin privilegios y la imagen no lleva el `.env`.
+- **`cloudflared`** (perfil `tunel`): el túnel con nombre, con IP fija `IP_TUNEL` dentro de la red de
+  Docker. La app solo confía en los encabezados de proxy que llegan desde esa IP.
+
+Para crear el administrador dentro del contenedor:
+
+```powershell
+docker compose run --rm app python -m tools.crear_admin --usuario <nombre>
+```
+
+`.env` debe incluir `127.0.0.1` en `HOSTS_PERMITIDOS`, porque la revisión de salud del contenedor
+consulta por esa dirección. Las contraseñas de MySQL van dentro de URLs, así que usa solo letras,
+números, `-` y `_`.
+
+> **Con Docker, el túnel debe ir en el contenedor `cloudflared`, no como servicio de Windows.** Desde Windows
+> las peticiones llegarían a la app por la red de Docker, que no es el proxy de confianza. Se perderían la
+> cookie `Secure`, HSTS y el límite de login por persona.
+
 ## 2. Red y energía
 
 - **IP fija para la laptop:** resérvala en el router (DHCP), porque el ESP32 la tiene configurada.
@@ -44,10 +71,10 @@ New-NetFirewallRule -DisplayName "AquaSense ESP32" -Direction Inbound -Protocol 
 
 ## 3. Arranque automático
 
-MySQL arranca solo con Docker Desktop (`restart: unless-stopped`). Activa en Docker Desktop la opción
-de iniciar con la sesión de Windows.
+Con Docker basta con activar en Docker Desktop la opción de iniciar con la sesión de Windows: todos los
+contenedores tienen `restart: unless-stopped`.
 
-Para la app, una tarea programada que corra al iniciar sesión. Ajusta la ruta del proyecto:
+Sin Docker para la app, una tarea programada que corra al iniciar sesión. Ajusta la ruta del proyecto:
 
 ```powershell
 $accion = New-ScheduledTaskAction -Execute "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code\.venv\Scripts\python.exe" -Argument "-m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips 127.0.0.1" -WorkingDirectory "D:\1_Universidad\5-SEMESTRE\Embebed\Proyecto\Code"
@@ -60,6 +87,10 @@ Register-ScheduledTask -TaskName "AquaSense" -Action $accion -Trigger (New-Sched
 Usa `--host 0.0.0.0` para que el ESP32 llegue por la red local. El firewall limita el acceso a esa red.
 
 ## 4. Túnel con nombre (URL fija)
+
+Con Docker: crea el túnel en el panel apuntando a `http://app:8000`, pon su token en
+`CLOUDFLARE_TUNNEL_TOKEN` y corre `docker compose --profile tunel up -d`. Los pasos siguientes son para
+la app sin Docker.
 
 1. En el panel de Cloudflare, con un dominio propio: **Zero Trust → Networks → Tunnels → Create**.
 2. Asigna un nombre público, por ejemplo `aquasense.tudominio.com`, apuntando a `http://127.0.0.1:8000`.

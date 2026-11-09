@@ -46,5 +46,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_prediccion_cambio_agua_id_generada_en"), table_name="prediccion")
+    # Borrar la tabla elimina sus índices. Borrar antes el índice falla en MySQL (error 1553),
+    # porque la llave foránea de cambio_agua_id lo usa.
     op.drop_table("prediccion")

@@ -1,0 +1,20 @@
+# Nunca dentro de la imagen: secretos, bases locales y respaldos
+.env
+*.db
+*.sql
+
+# Desarrollo
+.venv/
+venv/
+.git/
+.github/
+.claude/
+tests/
+docs/
+docker/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
