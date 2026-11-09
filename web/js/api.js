@@ -3,17 +3,18 @@
 const LOGIN = "/login.html";
 
 export class ErrorApi extends Error {
-  constructor(codigo, mensaje, estadoHttp) {
+  constructor(codigo, mensaje, estadoHttp, detalles = null) {
     super(mensaje);
     this.codigo = codigo;
     this.estadoHttp = estadoHttp;
+    this.detalles = detalles;
   }
 }
 
 async function leerError(respuesta) {
   try {
     const { error } = await respuesta.json();
-    return new ErrorApi(error.code, error.message, respuesta.status);
+    return new ErrorApi(error.code, error.message, respuesta.status, error.details);
   } catch {
     return new ErrorApi("ERROR_DESCONOCIDO", "El servidor respondió con un error.", respuesta.status);
   }

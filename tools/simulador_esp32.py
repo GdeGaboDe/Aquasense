@@ -30,6 +30,7 @@ TDS_INICIAL_PPM = 150.0
 TDS_AUMENTO_POR_LECTURA_PPM = 0.02
 PROBABILIDAD_ALERTA = 0.02
 PROBABILIDAD_DOSIS = 0.01
+PROBABILIDAD_FALLA_COMANDO = 0.05
 
 _ALEATORIO = random.Random()  # noqa: S311 - son datos simulados, no un uso criptográfico
 
@@ -39,6 +40,9 @@ class Nodo:
     mac: str
     modulos: list[str]
     tds_ppm: float = TDS_INICIAL_PPM
+    config_version_aplicada: int | None = None
+    aireador_encendido: int = 1
+    alarma_silenciada_hasta: float = 0.0
 
 
 @dataclass
@@ -49,7 +53,6 @@ class Estado:
     lote: int = 0
     pendientes_lecturas: list[dict] = field(default_factory=list)
     pendientes_eventos: list[dict] = field(default_factory=list)
-    config_no_disponible_avisado: bool = False
 
     @property
     def nodos(self) -> list[Nodo]:
@@ -81,9 +84,13 @@ def _valores_de_modulo(modulo: str, nodo: Nodo) -> dict[str, float]:
             "distancia_tolva_cm": 20.0 if vacia else round(_ALEATORIO.uniform(3, 10), 1),
             "tolva_vacia": 1 if vacia else 0,
         }
-    if modulo in ("aireador", "calentador", "alarma"):
-        codigo = {"aireador": "aireador_encendido", "calentador": "calentador_encendido"}
-        return {codigo.get(modulo, "alarma_activa"): 1 if modulo == "aireador" else 0}
+    if modulo == "aireador":
+        return {"aireador_encendido": nodo.aireador_encendido}
+    if modulo == "calentador":
+        return {"calentador_encendido": 0}
+    if modulo == "alarma":
+        silenciada = time.time() < nodo.alarma_silenciada_hasta
+        return {"alarma_activa": 0 if silenciada else int(_caso_raro(PROBABILIDAD_ALERTA))}
     return {}  # servo y rtc no reportan variables
 
 
@@ -137,7 +144,7 @@ def construir_lote(estado: Estado) -> dict:
                 "firmware": FIRMWARE,
                 "boot": estado.boot,
                 "modulos": nodo.modulos,
-                "config_version_aplicada": 1,
+                "config_version_aplicada": nodo.config_version_aplicada,
             }
             for nodo in estado.nodos
         ],
@@ -185,15 +192,55 @@ def enviar_telemetria(url_base: str, token: str, estado: Estado) -> bool:
     return True
 
 
+def _ejecutar_comando(estado: Estado, comando: dict) -> tuple[str, str | None]:
+    """Simula la ejecución en el nodo. Devuelve el resultado y un detalle para el ACK."""
+    nodo = next((n for n in estado.nodos if n.mac == comando["mac"]), None)
+    if nodo is None:
+        return "fallido", "MAC desconocida para este autónomo"
+    if _caso_raro(PROBABILIDAD_FALLA_COMANDO):
+        return "fallido", "Falla simulada"
+    ahora_ms = int(time.time() * MS_POR_SEGUNDO)
+    if comando["tipo"] == "DISPENSAR":
+        estado.pendientes_eventos.append(
+            {
+                "mac": nodo.mac,
+                "tipo": "dosis",
+                "cargas": comando["argumento"],
+                "origen": "remoto",
+                "comando_id": comando["id"],
+                "boot": estado.boot,
+                "epoch_ms": ahora_ms,
+                "_medido_ms": ahora_ms,
+            }
+        )
+    elif comando["tipo"] == "AIREADOR":
+        nodo.aireador_encendido = comando["argumento"]
+    elif comando["tipo"] == "SILENCIAR_ALARMA":
+        nodo.alarma_silenciada_hasta = time.time() + 60 * comando["argumento"]
+    return "confirmado", None
+
+
 def consultar_config(url_base: str, token: str, estado: Estado) -> None:
+    """Aplica la configuración, ejecuta los comandos recibidos y responde su ACK."""
     try:
-        codigo, _ = _peticion(f"{url_base}/api/v1/device/config", token)
+        codigo, cuerpo = _peticion(f"{url_base}/api/v1/device/config", token)
     except (urllib.error.URLError, TimeoutError):
         return
-    # /device/config llega en la Fase 2: hasta entonces solo se avisa una vez.
-    if codigo == 404 and not estado.config_no_disponible_avisado:
-        print("El servidor aún no ofrece /device/config.", file=sys.stderr)
-        estado.config_no_disponible_avisado = True
+    if codigo != 200 or cuerpo is None:
+        return
+    for configuracion in cuerpo["nodos"]:
+        nodo = next((n for n in estado.nodos if n.mac == configuracion["mac"]), None)
+        if nodo is not None and configuracion["config_version"] != nodo.config_version_aplicada:
+            nodo.config_version_aplicada = configuracion["config_version"]
+            print(f"Configuración v{nodo.config_version_aplicada} aplicada en {nodo.mac}")
+    for comando in cuerpo["comandos"]:
+        resultado, detalle = _ejecutar_comando(estado, comando)
+        ack = {"comando_id": comando["id"], "resultado": resultado, "detalle": detalle}
+        try:
+            codigo_ack, _ = _peticion(f"{url_base}/api/v1/device/ack", token, ack)
+        except (urllib.error.URLError, TimeoutError):
+            codigo_ack = 0
+        print(f"Comando {comando['id']} {comando['tipo']}: {resultado} (ACK {codigo_ack})")
 
 
 def _leer_satelite(texto: str) -> Nodo:
@@ -279,6 +326,7 @@ def ejecutar(argumentos: argparse.Namespace) -> int:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(line_buffering=True)
     argumentos = _crear_parser().parse_args()
     try:
         return ejecutar(argumentos)

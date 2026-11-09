@@ -117,3 +117,8 @@ def test_robots_prohibe_indexar(cliente):
     respuesta = cliente.get("/robots.txt")
 
     assert "Disallow: /" in respuesta.text
+
+
+def test_la_api_no_se_guarda_en_cache_y_la_web_se_revalida(cliente):
+    assert cliente.get("/api/v1/tanques").headers["cache-control"] == "no-store"
+    assert cliente.get("/js/api.js").headers["cache-control"] == "no-cache"

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Ajustes · AquaSense</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/app.css" />
+    <script type="module" src="/js/ajustes.js"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-900">
+    <header class="bg-sky-900 text-white">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 p-4">
+        <p class="text-xl font-bold">AquaSense</p>
+        <button
+          id="salir"
+          type="button"
+          class="rounded border border-white px-3 py-2 font-medium hover:bg-sky-800"
+        >
+          Cerrar sesión
+        </button>
+        <nav aria-label="Principal" class="w-full overflow-x-auto">
+          <ul class="flex gap-1 text-base font-medium">
+            <li><a href="/" class="block rounded px-3 py-2 hover:bg-sky-800">Panel</a></li>
+            <li><a href="/alertas.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alertas</a></li>
+            <li><a href="/alimentacion.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alimentación</a></li>
+            <li><a href="/ajustes.html" class="block rounded px-3 py-2 hover:bg-sky-800">Ajustes</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl p-4">
+      <h1 class="mb-3 text-2xl font-bold">Ajustes</h1>
+      <p id="estado-carga" role="status" class="mb-3 text-slate-700">Cargando…</p>
+      <div id="aviso" role="alert" hidden></div>
+
+      <div id="con-tanques" hidden>
+        <div class="mb-4 rounded-lg bg-white p-4 shadow">
+          <label for="tanque" class="mb-1 block font-medium">Tanque</label>
+          <select id="tanque" class="w-full rounded border border-slate-500 p-2 text-base"></select>
+        </div>
+
+        <section class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-umbrales">
+          <h2 id="titulo-umbrales" class="mb-1 text-xl font-bold">Umbrales</h2>
+          <p class="mb-3 text-sm text-slate-700">Deja mínimo y máximo vacíos para no vigilar esa variable.</p>
+          <div id="aviso-umbrales" role="alert" hidden></div>
+          <p id="sin-umbrales" class="text-slate-700" hidden>El nodo de este tanque aún no reporta variables numéricas.</p>
+          <form id="form-umbrales">
+            <div id="campos-umbrales" class="space-y-4"></div>
+            <button id="guardar-umbrales" type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500 mt-3">Guardar umbrales</button>
+          </form>
+        </section>
+
+        <section id="seccion-parametros" class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-parametros">
+          <h2 id="titulo-parametros" class="mb-1 text-xl font-bold">Parámetros del nodo</h2>
+          <p id="pendiente" class="mb-3 rounded bg-amber-100 p-2 text-amber-900" hidden></p>
+          <div id="aviso-parametros" role="alert" hidden></div>
+          <form id="form-parametros">
+            <div id="campos-parametros"></div>
+            <button type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Guardar parámetros</button>
+          </form>
+        </section>
+
+        <section id="seccion-control" class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-control" hidden>
+          <h2 id="titulo-control" class="mb-3 text-xl font-bold">Control manual</h2>
+          <div id="aviso-control" role="status" aria-live="polite" hidden></div>
+          <form id="form-silenciar" class="mb-3 flex flex-wrap items-end gap-3" hidden>
+            <div>
+              <label for="minutos" class="mb-1 block font-medium">Silenciar alarma (minutos)</label>
+              <input id="minutos" type="number" min="1" max="60" value="10" required class="w-full rounded border border-slate-500 p-2 text-base" />
+            </div>
+            <button type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Silenciar</button>
+          </form>
+          <div id="control-aireador" class="flex flex-wrap gap-3" hidden>
+            <button id="aireador-on" type="button" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Encender aireador</button>
+            <button id="aireador-off" type="button" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Apagar aireador</button>
+          </div>
+        </section>
+      </div>
+
+      <section class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-alta-tanque">
+        <h2 id="titulo-alta-tanque" class="mb-3 text-xl font-bold">Nuevo tanque</h2>
+        <div id="aviso-tanque" role="alert" hidden></div>
+        <form id="form-tanque" class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label for="tanque-nombre" class="mb-1 block font-medium">Nombre</label>
+            <input id="tanque-nombre" name="nombre" required maxlength="80" class="w-full rounded border border-slate-500 p-2 text-base" />
+          </div>
+          <div>
+            <label for="tanque-volumen" class="mb-1 block font-medium">Volumen (litros)</label>
+            <input id="tanque-volumen" name="volumen_l" type="number" min="0.01" step="0.01" required class="w-full rounded border border-slate-500 p-2 text-base" />
+          </div>
+          <div>
+            <label for="tanque-especie" class="mb-1 block font-medium">Especie (opcional)</label>
+            <input id="tanque-especie" name="especie" maxlength="80" class="w-full rounded border border-slate-500 p-2 text-base" />
+          </div>
+          <div class="sm:col-span-2"><button type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Crear tanque</button></div>
+        </form>
+      </section>
+
+      <section class="mb-4 rounded-lg bg-white p-4 shadow" aria-labelledby="titulo-alta-nodo">
+        <h2 id="titulo-alta-nodo" class="mb-3 text-xl font-bold">Nuevo nodo</h2>
+        <div id="aviso-nodo" role="alert" hidden></div>
+        <div id="token" class="mb-3 rounded border-2 border-amber-600 bg-amber-50 p-3" hidden>
+          <p class="font-semibold">Token del autónomo: cópialo ahora, no se vuelve a mostrar.</p>
+          <label for="token-valor" class="sr-only">Token del autónomo</label>
+          <input id="token-valor" readonly class="w-full rounded border border-slate-500 p-2 text-base mt-2 font-mono" />
+        </div>
+        <form id="form-nodo" class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label for="nodo-mac" class="mb-1 block font-medium">MAC</label>
+            <input id="nodo-mac" name="mac" required placeholder="24:6F:28:AB:CD:EF" pattern="^[0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5}$" class="w-full rounded border border-slate-500 p-2 text-base font-mono" aria-describedby="ayuda-mac" />
+            <p id="ayuda-mac" class="mt-1 text-sm text-slate-700">Seis pares hexadecimales separados por dos puntos.</p>
+          </div>
+          <div>
+            <label for="nodo-nombre" class="mb-1 block font-medium">Nombre</label>
+            <input id="nodo-nombre" name="nombre" required maxlength="80" class="w-full rounded border border-slate-500 p-2 text-base" />
+          </div>
+          <div>
+            <label for="nodo-tanque" class="mb-1 block font-medium">Tanque (sin nodo)</label>
+            <select id="nodo-tanque" name="tanque_id" required class="w-full rounded border border-slate-500 p-2 text-base"></select>
+          </div>
+          <div>
+            <label for="nodo-padre" class="mb-1 block font-medium">Tipo</label>
+            <select id="nodo-padre" name="padre_id" class="w-full rounded border border-slate-500 p-2 text-base"></select>
+          </div>
+          <div class="sm:col-span-2"><button type="submit" class="rounded bg-sky-800 px-4 py-2 font-semibold text-white hover:bg-sky-900 disabled:bg-slate-500">Crear nodo</button></div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

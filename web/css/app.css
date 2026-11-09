@@ -8,3 +8,8 @@
 .hidden {
   display: none;
 }
+
+/* El atributo hidden gana sobre clases de Tailwind como "flex" o "grid". */
+[hidden] {
+  display: none !important;
+}

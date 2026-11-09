@@ -89,6 +89,10 @@ class EncabezadosDeSeguridad:
                     encabezados[nombre] = valor
                 if ruta.startswith("/docs"):
                     encabezados["Content-Security-Policy"] = _CSP_DOCS
+                # La API lleva datos de la sesión: nunca se guarda. La web se revalida siempre,
+                # para que una actualización llegue sin que el usuario tenga que borrar la caché.
+                es_api = ruta.startswith("/api/")
+                encabezados.setdefault("Cache-Control", "no-store" if es_api else "no-cache")
                 if es_https:
                     encabezados["Strict-Transport-Security"] = _HSTS
                     _marcar_cookies_seguras(encabezados)

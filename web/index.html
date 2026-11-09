@@ -11,7 +11,7 @@
   </head>
   <body class="min-h-screen bg-slate-100 text-slate-900">
     <header class="bg-sky-900 text-white">
-      <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 p-4">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 p-4">
         <p class="text-xl font-bold">AquaSense</p>
         <button
           id="salir"
@@ -20,6 +20,14 @@
         >
           Cerrar sesión
         </button>
+        <nav aria-label="Principal" class="w-full overflow-x-auto">
+          <ul class="flex gap-1 text-base font-medium">
+            <li><a href="/" class="block rounded px-3 py-2 hover:bg-sky-800">Panel</a></li>
+            <li><a href="/alertas.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alertas</a></li>
+            <li><a href="/alimentacion.html" class="block rounded px-3 py-2 hover:bg-sky-800">Alimentación</a></li>
+            <li><a href="/ajustes.html" class="block rounded px-3 py-2 hover:bg-sky-800">Ajustes</a></li>
+          </ul>
+        </nav>
       </div>
     </header>
 
@@ -27,14 +35,14 @@
       <h1 class="text-2xl font-bold">Panel general</h1>
       <p id="actualizado" role="status" class="mb-4 text-slate-700">Cargando tanques…</p>
 
-      <div id="error" role="alert" class="mb-4 hidden rounded bg-red-100 p-4 text-red-900">
+      <div id="error" role="alert" class="mb-4 rounded bg-red-100 p-4 text-red-900" hidden>
         <p id="error-mensaje" class="mb-2"></p>
         <button id="reintentar" type="button" class="rounded bg-red-900 px-3 py-2 font-medium text-white">
           Reintentar
         </button>
       </div>
 
-      <p id="vacio" class="hidden rounded bg-white p-6 text-center shadow">
+      <p id="vacio" class="rounded bg-white p-6 text-center shadow" hidden>
         Todavía no hay tanques registrados.
       </p>
 
