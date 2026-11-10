@@ -7,6 +7,7 @@ para el firmware en [docs/contrato-api.md](docs/contrato-api.md).
 | Documento | Contenido |
 |---|---|
 | [docs/contrato-api.md](docs/contrato-api.md) | API del ESP32: telemetría, configuración, comandos y ACK |
+| [docs/guia-servidor.md](docs/guia-servidor.md) | **Paso a paso para montar el servidor común en una laptop** |
 | [docs/conexion-esp32.md](docs/conexion-esp32.md) | Conectar el firmware web actual del ESP32 por el puente |
 | [docs/operacion.md](docs/operacion.md) | Dejar la laptop 24/7: arranque, túnel, firewall, respaldos |
 | [docs/checklist-demo.md](docs/checklist-demo.md) | Qué revisar en el celular antes de cada demo |
